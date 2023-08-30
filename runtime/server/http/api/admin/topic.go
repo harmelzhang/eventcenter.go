@@ -13,7 +13,7 @@ type CreateTopicReq struct {
 }
 
 type CreateTopicRes struct {
-	api.EmptyRes
+	api.BaseRes
 }
 
 // 查询主题
@@ -34,5 +34,5 @@ type DeleteTopicReq struct {
 }
 
 type DeleteTopicRes struct {
-	api.EmptyRes
+	api.BaseRes
 }

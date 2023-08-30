@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-var tableName = "topic"
+var topicTableName = "topic"
 
 // Topic 主题
 type Topic struct {
@@ -20,14 +20,14 @@ type topicColumns struct {
 	CreateTime string // 创建时间
 }
 
-// topicInfo 主题信息
+// topicInfo 主题表信息
 type topicInfo struct {
 	table   string
 	columns topicColumns
 }
 
 var TopicInfo = topicInfo{
-	table: tableName,
+	table: topicTableName,
 	columns: topicColumns{
 		Id:         "id",
 		Name:       "name",
@@ -35,7 +35,7 @@ var TopicInfo = topicInfo{
 	},
 }
 
-// Table 表名
+// Table 数据表名
 func (info *topicInfo) Table() string {
 	return info.table
 }

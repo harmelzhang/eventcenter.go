@@ -23,3 +23,11 @@ const (
 	NameConnectorKafka      = "kafka"      // Kafka
 	NameConnectorPulsar     = "pulsar"     // Pulsar
 )
+
+// 监控指标插件
+
+const (
+	TypeMetrics = "metrics"
+
+	NameMetricsPrometheus = "prometheus" // Prometheus
+)

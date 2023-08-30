@@ -212,7 +212,7 @@ func registerPlugins() {
 	controller.RegisterStoragePlugin()
 	admin.RegisterStoragePlugin()
 
-	controller.RegisterConnectorPlugin()
+	// controller.RegisterConnectorPlugin()
 }
 
 // InitPliguins 初始化插件
