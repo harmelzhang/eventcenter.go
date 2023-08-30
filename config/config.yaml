@@ -1,0 +1,35 @@
+server:
+  address: ":3894"
+  serverAgent: "EventCenter 1.0 Server"
+
+tcp:
+  port: ":13894"
+
+grpc:
+  port: ":23894"
+
+plugins:
+  storage:  # 存储元数据
+    active: "database"  # 不配置 active 则存储在内存中，或者配置 standalone
+    database:
+      link: "mysql:root:123456@tcp(127.0.0.1:3306)/eventcenter?loc=Local&parseTime=true"
+      debug: true
+      maxIdle: 10  # 连接池最大闲置的连接数
+      maxOpen: 10  # 连接池最大打开的连接数
+      maxLifetime: 30  # 连接对象可重复使用的时间长度（秒）
+    mongodb:
+      uri: "mongodb://root:n5qxo0c7tHSI6DtM@192.168.0.249:27017"
+      database: "test_zhangpeng"
+      poolSize: 5
+    redis:
+      address: "192.168.0.249:16379"
+      password: "6HgjpHyTzeREdX46"
+      db: 2
+      minIdle: 5  # 允许闲置的最小连接数
+      maxIdle: 10  # 允许闲置的最大连接数
+
+  connector:  # 连接器
+    active: "standalone"  # 不配置 active 则存储在内存中，或者配置 standalone
+    rabbitmq:
+      uri: "amqp://root:root@192.168.2.249:5672/eventcenter"
+      exchange: "xxxxx"
