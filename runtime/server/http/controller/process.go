@@ -2,10 +2,13 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"eventcenter-go/runtime/server/http/api"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/gogf/gf/v2/os/gctx"
 	"github.com/google/uuid"
+	"log"
 	"strings"
 	"time"
 )
@@ -22,17 +25,12 @@ func (c processController) Subscribe(ctx context.Context, req *api.SubscribeReq)
 		return
 	}
 
-	// 如果没有该主题则创建
-	topic, err := storagePlugin.TopicService().QueryByName(ctx, req.TopicName)
+	topic, err := storagePlugin.TopicService().QueryOrCreateByName(ctx, req.TopicName)
 	if err != nil {
 		return
 	}
-	if topic == nil {
-		topic, err = storagePlugin.TopicService().Create(ctx, req.TopicName)
-		if err != nil {
-			return
-		}
-	}
+
+	log.Println(topic)
 
 	// TODO 注册入库
 
@@ -44,11 +42,35 @@ func (c processController) Trigger(ctx context.Context, req *api.TriggerReq) (re
 	uid := uuid.NewString()
 
 	event := cloudevents.NewEvent()
-	event.SetSubject(req.TopicName)
-	event.SetTime(time.Now())
 	event.SetID(uid)
+	event.SetSource(req.Source)
+	event.SetSubject(req.TopicName)
+	event.SetType("create")
+	// 数据类型判断
+	data := make(map[string]interface{})
+	err = json.Unmarshal([]byte(req.Data), &data)
+	if err != nil {
+		err = event.SetData(cloudevents.ApplicationJSON, req.Data)
+		if err != nil {
+			return
+		}
+	} else {
+		err = event.SetData(cloudevents.ApplicationJSON, data)
+		if err != nil {
+			return
+		}
+	}
+	event.SetTime(time.Now())
 
 	// TODO 丢入队列
+
+	// 入库
+	go func() {
+		err = storagePlugin.EventService().Create(gctx.New(), event)
+		if err != nil {
+			log.Printf("insert event err: %v", err)
+		}
+	}()
 
 	resp = new(api.TriggerRes)
 	resp.EventId = uid

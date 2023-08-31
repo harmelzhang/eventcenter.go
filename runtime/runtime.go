@@ -203,7 +203,7 @@ func loadStoragePlugins(cfgVar *gvar.Var) error {
 // 加载连接器插件
 func loadConnectorPlugins(cfgVar *gvar.Var) error {
 	// 激活插件
-	plugin.ActivePlugin(plugin.TypeStorage, plugin.NameConnectorStandalone)
+	plugin.ActivePlugin(plugin.TypeConnector, plugin.NameConnectorStandalone)
 	return nil
 }
 

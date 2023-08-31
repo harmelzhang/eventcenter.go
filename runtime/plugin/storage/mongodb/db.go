@@ -23,48 +23,60 @@ type Collection struct {
 }
 
 type QuerySet struct {
-	Collection *Collection
-	Filter     bson.D
-	Options    options.FindOptions
+	collection *Collection
+	filter     bson.D
+	options    options.FindOptions
 }
 
 func (c *Collection) QuerySet() *QuerySet {
-	return &QuerySet{Collection: c, Filter: make(bson.D, 0)}
+	return &QuerySet{collection: c, filter: make(bson.D, 0)}
 }
 
 func (qs *QuerySet) Q(key string, value any) *QuerySet {
-	qs.Filter = append(qs.Filter, bson.E{Key: key, Value: value})
+	qs.filter = append(qs.filter, bson.E{Key: key, Value: value})
+	return qs
+}
+
+func (qs *QuerySet) Filter(filter bson.D) *QuerySet {
+	qs.filter = append(qs.filter, filter...)
 	return qs
 }
 
 func (qs *QuerySet) Sort(sort ...bson.E) *QuerySet {
-	qs.Options.Sort = bson.D(sort)
+	qs.options.Sort = bson.D(sort)
 	return qs
 }
 
 func (qs *QuerySet) Skip(i int64) *QuerySet {
-	qs.Options.SetSkip(i)
+	qs.options.SetSkip(i)
 	return qs
 }
 
 func (qs *QuerySet) Limit(i int64) *QuerySet {
-	qs.Options.SetLimit(i)
+	qs.options.SetLimit(i)
 	return qs
 }
 
+func (qs *QuerySet) Count() (cnt int64, err error) {
+	return qs.collection.CountDocuments(qs.collection.ctx, qs.filter, &options.CountOptions{
+		Limit: qs.options.Limit,
+		Skip:  qs.options.Skip,
+	})
+}
+
 func (qs *QuerySet) All(results interface{}) error {
-	cur, err := qs.Collection.Find(qs.Collection.ctx, qs.Filter, &qs.Options)
+	cur, err := qs.collection.Find(qs.collection.ctx, qs.filter, &qs.options)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err = cur.Close(qs.Collection.ctx)
+		err = cur.Close(qs.collection.ctx)
 		if err != nil {
 			log.Printf("close cursor error: %v", err)
 		}
 	}()
 
-	err = cur.All(qs.Collection.ctx, results)
+	err = cur.All(qs.collection.ctx, results)
 	if err != nil {
 		return err
 	}
@@ -72,19 +84,19 @@ func (qs *QuerySet) All(results interface{}) error {
 }
 
 func (qs *QuerySet) One(result interface{}) error {
-	cur, err := qs.Collection.Find(qs.Collection.ctx, qs.Filter, &qs.Options)
+	cur, err := qs.collection.Find(qs.collection.ctx, qs.filter, &qs.options)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err = cur.Close(qs.Collection.ctx)
+		err = cur.Close(qs.collection.ctx)
 		if err != nil {
 			log.Printf("close cursor error: %v", err)
 		}
 	}()
 
 	if cur.Current == nil {
-		if cur.TryNext(qs.Collection.ctx) {
+		if cur.TryNext(qs.collection.ctx) {
 			err = cur.Decode(result)
 			if err != nil {
 				return err

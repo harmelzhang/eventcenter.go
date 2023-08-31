@@ -22,3 +22,7 @@ func (p *redisPlugin) Init() error {
 func (p *redisPlugin) TopicService() storage.TopicService {
 	return tService
 }
+
+func (p *redisPlugin) EventService() storage.EventService {
+	return nil
+}

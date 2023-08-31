@@ -22,3 +22,7 @@ func (p *mongoPlugin) Init() error {
 func (p *mongoPlugin) TopicService() storage.TopicService {
 	return tService
 }
+
+func (p *mongoPlugin) EventService() storage.EventService {
+	return nil
+}

@@ -22,3 +22,7 @@ func (p *standalonePlugin) Init() error {
 func (p *standalonePlugin) TopicService() storage.TopicService {
 	return tService
 }
+
+func (p *standalonePlugin) EventService() storage.EventService {
+	return nil
+}

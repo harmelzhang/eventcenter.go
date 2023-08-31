@@ -20,6 +20,9 @@ type CreateTopicRes struct {
 
 type QueryTopicReq struct {
 	g.Meta `path:"/" method:"get" tags:"主题" summary:"主题列表"`
+	Name   string `p:"name" dc:"名称"`
+	Offset int    `p:"offset" dc:"跳过多少条"`
+	Limit  int    `p:"limit" dc:"取多少条"`
 }
 
 type QueryTopicRes struct {
@@ -30,7 +33,7 @@ type QueryTopicRes struct {
 
 type DeleteTopicReq struct {
 	g.Meta `path:"/" method:"delete" tags:"主题" summary:"删除主题"`
-	Id     string `p:"id" v:"required#ID不能为空" dc:"ID"`
+	Id     string `p:"id" v:"required#主题ID不能为空" dc:"ID"`
 }
 
 type DeleteTopicRes struct {

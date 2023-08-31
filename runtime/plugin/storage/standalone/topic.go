@@ -5,6 +5,7 @@ import (
 	"eventcenter-go/runtime/model"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/google/uuid"
+	"sort"
 	"strings"
 	"time"
 )
@@ -12,23 +13,6 @@ import (
 type topicService struct{}
 
 var tService = new(topicService)
-
-// Create 创建主题
-func (s topicService) Create(ctx context.Context, name string) (topic *model.Topic, err error) {
-	err = g.Try(ctx, func(ctx context.Context) {
-		topic, err = s.QueryByName(ctx, name)
-		if err != nil {
-			g.Throw(err)
-		}
-		if topic != nil {
-			// g.Throw("存在同名的主题")
-			return
-		}
-		topic = &model.Topic{Id: uuid.NewString(), Name: name, CreateTime: time.Now()}
-		cache[topic.Id+":"+topic.Name] = topic
-	})
-	return
-}
 
 // QueryByName 根据名称查询
 func (s topicService) QueryByName(ctx context.Context, name string) (topic *model.Topic, err error) {
@@ -43,19 +27,74 @@ func (s topicService) QueryByName(ctx context.Context, name string) (topic *mode
 	return
 }
 
-// Query 查询主题
-func (s topicService) Query(ctx context.Context) (topics []*model.Topic, err error) {
+// Create 创建主题
+func (s topicService) Create(ctx context.Context, name string) (topic *model.Topic, err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
-		topics = make([]*model.Topic, 0)
-		for _, topic := range cache {
-			topics = append(topics, topic)
+		topic = &model.Topic{Id: uuid.NewString(), Name: name, CreateTime: time.Now()}
+		cache[topic.Id+":"+topic.Name] = topic
+	})
+	return
+}
+
+// QueryOrCreateByName 根据名称查询，如果查询不到则创建
+func (s topicService) QueryOrCreateByName(ctx context.Context, name string) (topic *model.Topic, err error) {
+	err = g.Try(ctx, func(ctx context.Context) {
+		topic, err = s.QueryByName(ctx, name)
+		if err != nil {
+			g.Throw(err)
+		}
+		if topic == nil {
+			topic, err = s.Create(ctx, name)
+			if err != nil {
+				g.Throw(err)
+			}
 		}
 	})
 	return
 }
 
-// Delete 删除主题
-func (s topicService) Delete(ctx context.Context, id string) (err error) {
+// Query 查询主题
+func (s topicService) Query(ctx context.Context, name string, offset, limit int) (topics []*model.Topic, count int64, err error) {
+	topics = make([]*model.Topic, 0)
+	err = g.Try(ctx, func(ctx context.Context) {
+		for _, topic := range cache {
+			topics = append(topics, topic)
+		}
+
+		if name != "" {
+			filter := make([]*model.Topic, 0)
+			for _, topic := range topics {
+				if strings.Contains(topic.Name, name) {
+					filter = append(filter, topic)
+				}
+			}
+			topics = filter
+		}
+
+		count = int64(len(topics))
+
+		// 倒序排序
+		sort.Slice(topics, func(i, j int) bool {
+			return topics[i].CreateTime.Unix() > topics[j].CreateTime.Unix()
+		})
+
+		if offset >= 0 && limit > 0 {
+			if offset >= len(topics) {
+				topics = make([]*model.Topic, 0)
+			} else {
+				end := offset + limit
+				if end > len(topics) {
+					end = len(topics)
+				}
+				topics = topics[offset:end]
+			}
+		}
+	})
+	return
+}
+
+// DeleteById 根据ID删除主题
+func (s topicService) DeleteById(ctx context.Context, id string) (err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
 		keys := getKeys()
 		for _, key := range keys {

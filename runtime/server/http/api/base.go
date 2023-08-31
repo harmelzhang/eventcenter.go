@@ -12,6 +12,6 @@ type BaseRes struct {
 // PageRes 分页返回
 type PageRes struct {
 	BaseRes
-	Total int         `json:"total"`
+	Total int64       `json:"total"`
 	Rows  interface{} `json:"rows"`
 }

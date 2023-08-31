@@ -22,3 +22,7 @@ func (p *dataBasePlugin) Init() error {
 func (p *dataBasePlugin) TopicService() storage.TopicService {
 	return tService
 }
+
+func (p *dataBasePlugin) EventService() storage.EventService {
+	return eService
+}

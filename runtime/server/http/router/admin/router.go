@@ -9,4 +9,7 @@ func Router(group *ghttp.RouterGroup) {
 	group.Group("/topic", func(group *ghttp.RouterGroup) {
 		group.Bind(admin.TopicController)
 	})
+	group.Group("/event", func(group *ghttp.RouterGroup) {
+		group.Bind(admin.EventController)
+	})
 }
