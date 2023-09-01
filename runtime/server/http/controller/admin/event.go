@@ -11,6 +11,10 @@ var EventController = new(eventController)
 
 // Query 查询事件
 func (c eventController) Query(ctx context.Context, req *admin.QueryEventReq) (resp *admin.QueryEventRes, err error) {
+	resp = new(admin.QueryEventRes)
+	events, count, err := storagePlugin.EventService().Query(ctx, req.Source, req.TopicName, req.Type, req.Offset, req.Limit)
+	resp.Total = count
+	resp.Rows = events
 	return
 }
 

@@ -1,4 +1,4 @@
-package database
+package mongodb
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"eventcenter-go/runtime/model"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/gogf/gf/v2/frame/g"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type eventService struct{}
@@ -34,7 +36,7 @@ func (s *eventService) Create(ctx context.Context, cloudevent cloudevents.Event)
 			CreateTime:  cloudevent.Time(),
 			CloudEvents: string(bytes),
 		}
-		_, err = DB(ctx, model.EventInfo.Table()).Insert(event)
+		_, err = DB(ctx, model.EventInfo.Table()).InsertOne(ctx, event)
 		if err != nil {
 			g.Throw(err)
 		}
@@ -45,7 +47,7 @@ func (s *eventService) Create(ctx context.Context, cloudevent cloudevents.Event)
 // DeleteById 根据ID删除
 func (s *eventService) DeleteById(ctx context.Context, id string) (err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
-		_, err = DB(ctx, model.EventInfo.Table()).Where(model.EventInfo.Columns().Id, id).Delete()
+		_, err = DB(ctx, model.EventInfo.Table()).DeleteOne(ctx, bson.M{"id": id})
 		if err != nil {
 			g.Throw(err)
 		}
@@ -57,10 +59,12 @@ func (s *eventService) DeleteById(ctx context.Context, id string) (err error) {
 func (s *eventService) Query(ctx context.Context, source, topicName, typ string, offset, limit int) (events []*model.Event, count int64, err error) {
 	events = make([]*model.Event, 0)
 	err = g.Try(ctx, func(ctx context.Context) {
-		dao := DB(ctx, model.EventInfo.Table())
+		qs := DB(ctx, model.EventInfo.Table()).QuerySet()
 
 		if source != "" {
-			dao = dao.WhereLike(model.EventInfo.Columns().Source, "%"+source+"%")
+			qs.Filter(bson.D{
+				{model.EventInfo.Columns().Source, primitive.Regex{Pattern: source, Options: "i"}},
+			})
 		}
 		if topicName != "" {
 			topics, _, err := tService.Query(ctx, topicName, 0, -1)
@@ -71,23 +75,24 @@ func (s *eventService) Query(ctx context.Context, source, topicName, typ string,
 			for _, topic := range topics {
 				topicIds = append(topicIds, topic.Id)
 			}
-			dao = dao.Where(model.EventInfo.Columns().TopicId+" in (?)", topicIds)
+			qs.Q(model.EventInfo.Columns().TopicId, bson.M{"$in": topicIds})
 		}
 		if typ != "" {
-			dao = dao.WhereLike(model.EventInfo.Columns().Type, "%"+typ+"%")
+			qs.Filter(bson.D{
+				{model.EventInfo.Columns().Type, primitive.Regex{Pattern: typ, Options: "i"}},
+			})
 		}
 
-		cnt, err := dao.Count()
+		count, err = qs.Count()
 		if err != nil {
 			g.Throw(err)
 		}
-		count = int64(cnt)
 
 		if offset >= 0 && limit > 0 {
-			dao = dao.Offset(offset).Limit(limit)
+			qs.Skip(int64(offset)).Limit(int64(limit))
 		}
 
-		err = dao.OrderDesc(model.TopicInfo.Columns().CreateTime).Scan(&events)
+		err = qs.Sort(bson.E{Key: model.EventInfo.Columns().CreateTime, Value: -1}).All(&events)
 		if err != nil {
 			g.Throw(err)
 		}

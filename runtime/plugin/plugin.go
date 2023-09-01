@@ -1,12 +1,14 @@
 package plugin
 
+import "github.com/gogf/gf/v2/container/gvar"
+
 // Plugin 插件
 type Plugin interface {
 	// Type 插件类型
 	Type() string
 
 	// Init 初始化
-	Init() error
+	Init(config map[string]*gvar.Var) error
 }
 
 // 注册的所有插件

@@ -21,6 +21,7 @@ type TriggerReq struct {
 	g.Meta    `path:"/trigger" method:"post" tags:"事件处理" summary:"触发事件"`
 	Source    string `p:"source" v:"required#事件源不能为空" dc:"事件源名称"`
 	TopicName string `p:"topic" v:"required#主题名称不能为空" dc:"主题名称"`
+	Type      string `p:"type" v:"required#事件类型不能为空" dc:"事件类型"`
 	Data      string `p:"data" v:"required#事件上下文信息不能为空" dc:"事件数据"`
 }
 

@@ -13,7 +13,7 @@ type topicService struct{}
 var tService = new(topicService)
 
 // QueryByName 根据名称查询
-func (s topicService) QueryByName(ctx context.Context, name string) (topic *model.Topic, err error) {
+func (s *topicService) QueryByName(ctx context.Context, name string) (topic *model.Topic, err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
 		err = DB(ctx, model.TopicInfo.Table()).Where(model.TopicInfo.Columns().Name, name).Scan(&topic)
 		if err != nil {
@@ -24,7 +24,7 @@ func (s topicService) QueryByName(ctx context.Context, name string) (topic *mode
 }
 
 // Create 创建主题
-func (s topicService) Create(ctx context.Context, name string) (topic *model.Topic, err error) {
+func (s *topicService) Create(ctx context.Context, name string) (topic *model.Topic, err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
 		topic = &model.Topic{Id: uuid.NewString(), Name: name, CreateTime: time.Now()}
 		_, err = DB(ctx, model.TopicInfo.Table()).Insert(topic)
@@ -36,7 +36,7 @@ func (s topicService) Create(ctx context.Context, name string) (topic *model.Top
 }
 
 // QueryOrCreateByName 根据名称查询，如果查询不到则创建
-func (s topicService) QueryOrCreateByName(ctx context.Context, name string) (topic *model.Topic, err error) {
+func (s *topicService) QueryOrCreateByName(ctx context.Context, name string) (topic *model.Topic, err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
 		topic, err = s.QueryByName(ctx, name)
 		if err != nil {
@@ -53,7 +53,7 @@ func (s topicService) QueryOrCreateByName(ctx context.Context, name string) (top
 }
 
 // Query 查询主题
-func (s topicService) Query(ctx context.Context, name string, offset, limit int) (topics []*model.Topic, count int64, err error) {
+func (s *topicService) Query(ctx context.Context, name string, offset, limit int) (topics []*model.Topic, count int64, err error) {
 	topics = make([]*model.Topic, 0)
 	err = g.Try(ctx, func(ctx context.Context) {
 		dao := DB(ctx, model.TopicInfo.Table())
@@ -77,7 +77,7 @@ func (s topicService) Query(ctx context.Context, name string, offset, limit int)
 }
 
 // DeleteById 根据ID删除主题
-func (s topicService) DeleteById(ctx context.Context, id string) (err error) {
+func (s *topicService) DeleteById(ctx context.Context, id string) (err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
 		_, err = DB(ctx, model.TopicInfo.Table()).Where(model.TopicInfo.Columns().Id, id).Delete()
 		if err != nil {

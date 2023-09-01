@@ -45,7 +45,7 @@ func (c processController) Trigger(ctx context.Context, req *api.TriggerReq) (re
 	event.SetID(uid)
 	event.SetSource(req.Source)
 	event.SetSubject(req.TopicName)
-	event.SetType("create")
+	event.SetType(req.Type)
 	// 数据类型判断
 	data := make(map[string]interface{})
 	err = json.Unmarshal([]byte(req.Data), &data)

@@ -3,6 +3,7 @@ package standalone
 import (
 	"eventcenter-go/runtime/plugin"
 	"eventcenter-go/runtime/storage"
+	"github.com/gogf/gf/v2/container/gvar"
 )
 
 type standalonePlugin struct{}
@@ -15,7 +16,7 @@ func (p *standalonePlugin) Type() string {
 	return plugin.TypeStorage
 }
 
-func (p *standalonePlugin) Init() error {
+func (p *standalonePlugin) Init(config map[string]*gvar.Var) error {
 	return nil
 }
 
@@ -24,5 +25,5 @@ func (p *standalonePlugin) TopicService() storage.TopicService {
 }
 
 func (p *standalonePlugin) EventService() storage.EventService {
-	return nil
+	return eService
 }

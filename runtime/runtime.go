@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"errors"
 	"eventcenter-go/runtime/consts"
 	"eventcenter-go/runtime/plugin"
 	"eventcenter-go/runtime/plugin/storage/mongodb"
@@ -10,6 +11,7 @@ import (
 	"eventcenter-go/runtime/server/http/controller"
 	"eventcenter-go/runtime/server/http/controller/admin"
 	"eventcenter-go/runtime/server/tcp"
+	"fmt"
 	"github.com/gogf/gf/v2/container/gvar"
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/database/gredis"
@@ -178,6 +180,16 @@ func loadStoragePlugins(cfgVar *gvar.Var) error {
 				return err
 			}
 			mongodb.InitDB(conn.Database(configInfo["database"].String()))
+		} else {
+			err := errors.New(fmt.Sprintf("not support plug: %s", key))
+			return err
+		}
+
+		// 初始化插件
+		p := plugin.Get(plugin.TypeStorage, key)
+		err := p.Init(configInfo)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -213,19 +225,4 @@ func registerPlugins() {
 	admin.RegisterStoragePlugin()
 
 	// controller.RegisterConnectorPlugin()
-}
-
-// InitPliguins 初始化插件
-func InitPliguins() error {
-	for typeName, plugins := range plugin.GetPlugins() {
-		log.Printf("init %s plugins", typeName)
-		for name, p := range plugins {
-			log.Printf("init %s plugin", name)
-			err := p.Init()
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }

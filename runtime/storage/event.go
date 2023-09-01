@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"eventcenter-go/runtime/model"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
@@ -15,5 +16,5 @@ type EventService interface {
 	DeleteById(ctx context.Context, id string) (err error)
 
 	// Query 查询事件
-	//Query(ctx context.Context) (events []*model.Event, err error)
+	Query(ctx context.Context, source, topicName, typ string, offset, limit int) (events []*model.Event, count int64, err error)
 }

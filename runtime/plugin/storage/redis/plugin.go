@@ -3,6 +3,7 @@ package redis
 import (
 	"eventcenter-go/runtime/plugin"
 	"eventcenter-go/runtime/storage"
+	"github.com/gogf/gf/v2/container/gvar"
 )
 
 type redisPlugin struct{}
@@ -15,7 +16,7 @@ func (p *redisPlugin) Type() string {
 	return plugin.TypeStorage
 }
 
-func (p *redisPlugin) Init() error {
+func (p *redisPlugin) Init(config map[string]*gvar.Var) error {
 	return nil
 }
 
@@ -24,5 +25,5 @@ func (p *redisPlugin) TopicService() storage.TopicService {
 }
 
 func (p *redisPlugin) EventService() storage.EventService {
-	return nil
+	return eService
 }
