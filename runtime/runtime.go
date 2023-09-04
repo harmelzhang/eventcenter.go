@@ -184,13 +184,6 @@ func loadStoragePlugins(cfgVar *gvar.Var) error {
 			err := errors.New(fmt.Sprintf("not support plug: %s", key))
 			return err
 		}
-
-		// 初始化插件
-		p := plugin.Get(plugin.TypeStorage, key)
-		err := p.Init(configInfo)
-		if err != nil {
-			return err
-		}
 	}
 
 	active, isOK := config[plugin.NameActive]
@@ -209,11 +202,30 @@ func loadStoragePlugins(cfgVar *gvar.Var) error {
 
 	// 激活插件
 	plugin.ActivePlugin(plugin.TypeStorage, activePluginName)
+
+	// 初始化插件
+	p := plugin.Get(plugin.TypeStorage, activePluginName)
+	cfg := make(map[string]*gvar.Var)
+	if activePluginName != plugin.NameStorageStandalone {
+		cfg = config[activePluginName].MapStrVar()
+	}
+	err := p.Init(cfg)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // 加载连接器插件
 func loadConnectorPlugins(cfgVar *gvar.Var) error {
+	// 初始化默认插件
+	p := plugin.Get(plugin.TypeConnector, plugin.NameConnectorStandalone)
+	err := p.Init(nil)
+	if err != nil {
+		return err
+	}
+
 	// 激活插件
 	plugin.ActivePlugin(plugin.TypeConnector, plugin.NameConnectorStandalone)
 	return nil
