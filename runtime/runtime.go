@@ -181,35 +181,17 @@ func loadStoragePlugins(cfgVar *gvar.Var) error {
 			}
 			mongodb.InitDB(conn.Database(configInfo["database"].String()))
 		} else {
-			err := errors.New(fmt.Sprintf("not support plug: %s", key))
+			err := errors.New(fmt.Sprintf("[storage] not support plug: %s", key))
 			return err
 		}
 	}
 
-	active, isOK := config[plugin.NameActive]
-	activePluginName := plugin.NameStorageStandalone
-	if isOK {
-		name := active.String()
-		if _, has := config[name]; !has {
-			if name != plugin.NameStorageStandalone {
-				log.Printf("not found [%s] , use default config [%s]", activePluginName, plugin.NameStorageStandalone)
-				activePluginName = plugin.NameStorageStandalone
-			}
-		} else {
-			activePluginName = name
-		}
-	}
-
 	// 激活插件
+	activePluginName := getActivePluginName(plugin.TypeStorage, config)
 	plugin.ActivePlugin(plugin.TypeStorage, activePluginName)
 
 	// 初始化插件
-	p := plugin.Get(plugin.TypeStorage, activePluginName)
-	cfg := make(map[string]*gvar.Var)
-	if activePluginName != plugin.NameStorageStandalone {
-		cfg = config[activePluginName].MapStrVar()
-	}
-	err := p.Init(cfg)
+	err := initPlugin(plugin.TypeStorage, activePluginName, config)
 	if err != nil {
 		return err
 	}
@@ -219,15 +201,35 @@ func loadStoragePlugins(cfgVar *gvar.Var) error {
 
 // 加载连接器插件
 func loadConnectorPlugins(cfgVar *gvar.Var) error {
-	// 初始化默认插件
-	p := plugin.Get(plugin.TypeConnector, plugin.NameConnectorStandalone)
-	err := p.Init(nil)
+	// 加载配置
+	config := cfgVar.MapStrVar()
+
+	// 循环注册插件
+	for key, value := range config {
+		if key == plugin.NameActive {
+			continue
+		}
+
+		configInfo := value.MapStrVar()
+
+		if key == plugin.NameConnectorRabbitMQ {
+			log.Println(configInfo)
+		} else {
+			err := errors.New(fmt.Sprintf("[connector] not support plug: %s", key))
+			return err
+		}
+	}
+
+	// 激活插件
+	activePluginName := getActivePluginName(plugin.TypeConnector, config)
+	plugin.ActivePlugin(plugin.TypeConnector, activePluginName)
+
+	// 初始化插件
+	err := initPlugin(plugin.TypeConnector, activePluginName, config)
 	if err != nil {
 		return err
 	}
 
-	// 激活插件
-	plugin.ActivePlugin(plugin.TypeConnector, plugin.NameConnectorStandalone)
 	return nil
 }
 
@@ -237,4 +239,43 @@ func registerPlugins() {
 	admin.RegisterStoragePlugin()
 
 	// controller.RegisterConnectorPlugin()
+}
+
+// 获取激活插件名
+func getActivePluginName(pluginType string, config map[string]*gvar.Var) string {
+	active, isOK := config[plugin.NameActive]
+
+	activePluginName := plugin.NameStorageStandalone
+	if pluginType == plugin.TypeConnector {
+		activePluginName = plugin.NameConnectorStandalone
+	}
+
+	if isOK {
+		name := active.String()
+		if _, has := config[name]; !has {
+			if name != activePluginName {
+				log.Printf("[%s] not found [%s] , use default config [%s]", pluginType, name, activePluginName)
+			}
+		} else {
+			activePluginName = name
+		}
+	}
+	return activePluginName
+}
+
+// 初始化插件
+func initPlugin(pluginType, activePluginName string, config map[string]*gvar.Var) error {
+	// 初始化插件
+	p := plugin.Get(pluginType, activePluginName)
+	cfg := make(map[string]*gvar.Var)
+	if activePluginName != plugin.NameStorageStandalone {
+		cfg = config[activePluginName].MapStrVar()
+	}
+
+	err := p.Init(cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
