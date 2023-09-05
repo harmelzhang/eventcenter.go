@@ -33,14 +33,14 @@ func (c processController) Subscribe(ctx context.Context, req *api.SubscribeReq)
 		return
 	}
 
-	endpoint, err := endpointService.QueryByTopicAndServer(ctx, topic.Name, req.ServerName, req.Protocol)
+	endpoint, err := endpointService.QueryByTopicAndServer(ctx, topic.Name, req.Type, req.ServerName, req.Protocol)
 	if err != nil {
 		return
 	}
 
 	if endpoint == nil {
 		// 创建
-		err = endpointService.Create(ctx, req.ServerName, topic.Name, req.Protocol, req.Url)
+		err = endpointService.Create(ctx, req.ServerName, topic.Name, req.Type, req.Protocol, req.Url)
 		if err != nil {
 			return
 		}
@@ -63,7 +63,7 @@ func (c processController) Subscribe(ctx context.Context, req *api.SubscribeReq)
 func (c processController) Unsubscribe(ctx context.Context, req *api.UnsubscribeReq) (resp *api.UnsubscribeRes, err error) {
 	endpointService := storagePlugin.EndpointService()
 
-	endpoint, err := endpointService.QueryByTopicAndServer(ctx, req.TopicName, req.ServerName, req.Protocol)
+	endpoint, err := endpointService.QueryByTopicAndServer(ctx, req.TopicName, req.Type, req.ServerName, req.Protocol)
 	if err != nil {
 		return
 	}

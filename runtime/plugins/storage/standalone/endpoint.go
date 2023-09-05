@@ -15,7 +15,7 @@ type endpointService struct{}
 var epService = new(endpointService)
 
 // Create 创建终端
-func (s *endpointService) Create(ctx context.Context, serverName, topicName, protocol, endpoint string) (err error) {
+func (s *endpointService) Create(ctx context.Context, serverName, topicName, typ, protocol, endpoint string) (err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
 		topic, err := tService.QueryOrCreateByName(ctx, topicName)
 		if err != nil {
@@ -26,6 +26,7 @@ func (s *endpointService) Create(ctx context.Context, serverName, topicName, pro
 			Id:           uuid.NewString(),
 			ServerName:   serverName,
 			TopicId:      topic.Id,
+			Type:         typ,
 			Protocol:     protocol,
 			Endpoint:     endpoint,
 			RegisterTime: time.Now(),
@@ -58,7 +59,7 @@ func (s *endpointService) Update(ctx context.Context, endpoint *model.Endpoint) 
 }
 
 // Query 查询终端
-func (s *endpointService) Query(ctx context.Context, serverName, topicName, protocol string, offset, limit int) (endpoints []*model.Endpoint, count int64, err error) {
+func (s *endpointService) Query(ctx context.Context, serverName, topicName, typ, protocol string, offset, limit int) (endpoints []*model.Endpoint, count int64, err error) {
 	endpoints = make([]*model.Endpoint, 0)
 	err = g.Try(ctx, func(ctx context.Context) {
 		for _, endpoint := range endpointCache {
@@ -91,6 +92,15 @@ func (s *endpointService) Query(ctx context.Context, serverName, topicName, prot
 						filter = append(filter, endpoint)
 						break
 					}
+				}
+			}
+			endpoints = filter
+		}
+		if typ != "" {
+			filter := make([]*model.Endpoint, 0)
+			for _, endpoint := range endpoints {
+				if strings.Contains(endpoint.Type, typ) {
+					filter = append(filter, endpoint)
 				}
 			}
 			endpoints = filter
@@ -128,7 +138,7 @@ func (s *endpointService) Query(ctx context.Context, serverName, topicName, prot
 }
 
 // QueryByTopicAndServer 根据主题和服务查询
-func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, serverName, protocol string) (endpoint *model.Endpoint, err error) {
+func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, typ, serverName, protocol string) (endpoint *model.Endpoint, err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
 		endpoints := make([]*model.Endpoint, 0)
 		for _, ep := range endpointCache {
@@ -144,7 +154,7 @@ func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, 
 		}
 
 		for _, ep := range endpoints {
-			if ep.TopicId == topic.Id && ep.ServerName == serverName && ep.Protocol == protocol {
+			if ep.TopicId == topic.Id && ep.Type == typ && ep.ServerName == serverName && ep.Protocol == protocol {
 				endpoint = ep
 				return
 			}

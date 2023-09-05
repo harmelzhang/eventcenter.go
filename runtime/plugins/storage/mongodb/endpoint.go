@@ -15,7 +15,7 @@ type endpointService struct{}
 var epService = new(endpointService)
 
 // Create 创建终端
-func (s *endpointService) Create(ctx context.Context, serverName, topicName, protocol, endpoint string) (err error) {
+func (s *endpointService) Create(ctx context.Context, serverName, topicName, typ, protocol, endpoint string) (err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
 		topic, err := tService.QueryOrCreateByName(ctx, topicName)
 		if err != nil {
@@ -26,6 +26,7 @@ func (s *endpointService) Create(ctx context.Context, serverName, topicName, pro
 			Id:           uuid.NewString(),
 			ServerName:   serverName,
 			TopicId:      topic.Id,
+			Type:         typ,
 			Protocol:     protocol,
 			Endpoint:     endpoint,
 			RegisterTime: time.Now(),
@@ -57,6 +58,7 @@ func (s *endpointService) Update(ctx context.Context, endpoint *model.Endpoint) 
 			"$set": bson.M{
 				"server_name": endpoint.ServerName,
 				"topic_id":    endpoint.TopicId,
+				"type":        endpoint.Type,
 				"protocol":    endpoint.Protocol,
 				"endpoint":    endpoint.Endpoint,
 			},
@@ -70,7 +72,7 @@ func (s *endpointService) Update(ctx context.Context, endpoint *model.Endpoint) 
 }
 
 // Query 查询终端
-func (s *endpointService) Query(ctx context.Context, serverName, topicName, protocol string, offset, limit int) (endpoints []*model.Endpoint, count int64, err error) {
+func (s *endpointService) Query(ctx context.Context, serverName, topicName, typ, protocol string, offset, limit int) (endpoints []*model.Endpoint, count int64, err error) {
 	endpoints = make([]*model.Endpoint, 0)
 	err = g.Try(ctx, func(ctx context.Context) {
 		qs := DB(ctx, model.EndpointInfo.Table()).QuerySet()
@@ -90,6 +92,11 @@ func (s *endpointService) Query(ctx context.Context, serverName, topicName, prot
 				topicIds = append(topicIds, topic.Id)
 			}
 			qs.Q(model.EndpointInfo.Columns().TopicId, bson.M{"$in": topicIds})
+		}
+		if typ != "" {
+			qs.Filter(bson.D{
+				{model.EndpointInfo.Columns().Type, primitive.Regex{Pattern: typ, Options: "i"}},
+			})
 		}
 		if protocol != "" {
 			qs.Filter(bson.D{
@@ -115,7 +122,7 @@ func (s *endpointService) Query(ctx context.Context, serverName, topicName, prot
 }
 
 // QueryByTopicAndServer 根据主题和服务查询
-func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, serverName, protocol string) (endpoint *model.Endpoint, err error) {
+func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, typ, serverName, protocol string) (endpoint *model.Endpoint, err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
 		topic, err := tService.QueryOrCreateByName(ctx, topicName)
 		if err != nil {
@@ -124,6 +131,7 @@ func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, 
 
 		qs := DB(ctx, model.EndpointInfo.Table()).QuerySet()
 		qs.Q(model.EndpointInfo.Columns().TopicId, topic.Id)
+		qs.Q(model.EndpointInfo.Columns().Type, typ)
 		qs.Q(model.EndpointInfo.Columns().ServerName, serverName)
 		qs.Q(model.EndpointInfo.Columns().Protocol, protocol)
 

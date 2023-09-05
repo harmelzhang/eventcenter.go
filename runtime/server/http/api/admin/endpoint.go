@@ -10,6 +10,7 @@ import (
 type QueryEndpointReq struct {
 	g.Meta     `path:"/" method:"get" tags:"终端" summary:"查询终端"`
 	TopicName  string `p:"topic" dc:"主题名称"`
+	Type       string `p:"type" dc:"事件类型"`
 	ServerName string `p:"server" dc:"服务名称"`
 	Protocol   string `p:"protocol" dc:"协议名称"`
 	Offset     int    `p:"offset" dc:"跳过多少条"`
@@ -36,6 +37,7 @@ type DeleteEndpointRes struct {
 type CreateEndpointReq struct {
 	g.Meta     `path:"/" method:"post" tags:"终端" summary:"创建终端"`
 	TopicName  string `p:"topic" v:"required#主题名称不能为空" dc:"主题名称"`
+	Type       string `p:"type" v:"required#事件类型不能为空" dc:"事件类型"`
 	ServerName string `p:"server" v:"required#服务名称不能为空" dc:"服务名称"`
 	Protocol   string `p:"protocol" v:"required#协议名称不能为空" dc:"协议名称"`
 	Url        string `p:"url" v:"required|url#事件处理地址不能为空|事件处理地址格式错误" dc:"事件处理地址"`

@@ -9,6 +9,7 @@ type Endpoint struct {
 	Id           string    `bson:"id" json:"id"`                       // ID
 	ServerName   string    `bson:"server_name" json:"server_name"`     // 服务名
 	TopicId      string    `bson:"topic_id" json:"topic_id"`           // 主题ID
+	Type         string    `bson:"type" json:"type"`                   // 事件类型
 	Protocol     string    `bson:"protocol" json:"protocol"`           // 处理协议
 	Endpoint     string    `bson:"endpoint" json:"endpoint"`           // 终端地址
 	RegisterTime time.Time `bson:"register_time" json:"register_time"` // 注册时间
@@ -19,6 +20,7 @@ type endpointColumns struct {
 	Id           string // ID
 	ServerName   string // 服务名
 	TopicId      string // 主题ID
+	Type         string // 事件类型
 	Protocol     string // 协议
 	Endpoint     string // 终端地址
 	RegisterTime string // 注册时间
@@ -36,6 +38,7 @@ var EndpointInfo = endpointInfo{
 		Id:           "id",
 		ServerName:   "server_name",
 		TopicId:      "topic_id",
+		Type:         "type",
 		Protocol:     "protocol",
 		Endpoint:     "endpoint",
 		RegisterTime: "register_time",

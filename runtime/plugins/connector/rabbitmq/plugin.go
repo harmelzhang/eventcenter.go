@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"eventcenter-go/runtime/connector"
 	"eventcenter-go/runtime/plugins"
+	"github.com/gogf/gf/v2/container/gvar"
 	"go.uber.org/atomic"
 )
 
@@ -18,7 +19,7 @@ func (p *rabbitmqPlugin) Type() string {
 	return plugins.TypeConnector
 }
 
-func (p *rabbitmqPlugin) Init() error {
+func (p *rabbitmqPlugin) Init(config map[string]*gvar.Var) error {
 	return nil
 }
 

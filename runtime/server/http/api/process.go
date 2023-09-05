@@ -7,6 +7,7 @@ import "github.com/gogf/gf/v2/frame/g"
 type SubscribeReq struct {
 	g.Meta     `path:"/subscribe" method:"post" tags:"事件处理" summary:"订阅事件"`
 	TopicName  string `p:"topic" v:"required#主题名称不能为空" dc:"主题名称"`
+	Type       string `p:"type" v:"required#事件类型不能为空" dc:"事件类型"`
 	ServerName string `p:"server" v:"required#服务名称不能为空" dc:"服务名称"`
 	Protocol   string `p:"protocol" v:"required#协议名称不能为空" dc:"协议名称"`
 	Url        string `p:"url" v:"required|url#事件处理地址不能为空|事件处理地址格式错误" dc:"事件处理地址"`
@@ -21,6 +22,7 @@ type SubscribeRes struct {
 type UnsubscribeReq struct {
 	g.Meta     `path:"/unsubscribe" method:"post" tags:"事件处理" summary:"取消订阅"`
 	TopicName  string `p:"topic" v:"required#主题名称不能为空" dc:"主题名称"`
+	Type       string `p:"type" v:"required#事件类型不能为空" dc:"事件类型"`
 	ServerName string `p:"server" v:"required#服务名称不能为空" dc:"服务名称"`
 	Protocol   string `p:"protocol" v:"required#协议名称不能为空" dc:"协议名称"`
 }
