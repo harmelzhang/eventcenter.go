@@ -25,20 +25,60 @@ func (c processController) Subscribe(ctx context.Context, req *api.SubscribeReq)
 		return
 	}
 
-	topic, err := storagePlugin.TopicService().QueryOrCreateByName(ctx, req.TopicName)
+	topicService := storagePlugin.TopicService()
+	endpointService := storagePlugin.EndpointService()
+
+	topic, err := topicService.QueryOrCreateByName(ctx, req.TopicName)
 	if err != nil {
 		return
 	}
 
-	log.Println(topic)
+	endpoint, err := endpointService.QueryByTopicAndServer(ctx, topic.Name, req.ServerName, req.Protocol)
+	if err != nil {
+		return
+	}
 
-	// TODO 注册入库
+	if endpoint == nil {
+		// 创建
+		err = endpointService.Create(ctx, req.ServerName, topic.Name, req.Protocol, req.Url)
+		if err != nil {
+			return
+		}
+		// TODO 队列操作
+	} else {
+		// 更新地址
+		if endpoint.Endpoint != req.Url {
+			endpoint.Endpoint = req.Url
+			err = endpointService.Update(ctx, endpoint)
+			if err != nil {
+				return
+			}
+		}
+	}
+
+	return
+}
+
+// Unsubscribe 取消订阅
+func (c processController) Unsubscribe(ctx context.Context, req *api.UnsubscribeReq) (resp *api.UnsubscribeRes, err error) {
+	endpointService := storagePlugin.EndpointService()
+
+	endpoint, err := endpointService.QueryByTopicAndServer(ctx, req.TopicName, req.ServerName, req.Protocol)
+	if err != nil {
+		return
+	}
+
+	err = endpointService.DeleteById(ctx, endpoint.Id)
+
+	// TODO 队列操作
 
 	return
 }
 
 // Trigger 触发
 func (c processController) Trigger(ctx context.Context, req *api.TriggerReq) (resp *api.TriggerRes, err error) {
+	eventService := storagePlugin.EventService()
+
 	uid := uuid.NewString()
 
 	event := cloudevents.NewEvent()
@@ -62,11 +102,11 @@ func (c processController) Trigger(ctx context.Context, req *api.TriggerReq) (re
 	}
 	event.SetTime(time.Now())
 
-	// TODO 丢入队列
+	// TODO 队列操作
 
 	// 入库
 	go func() {
-		err = storagePlugin.EventService().Create(gctx.New(), event)
+		err = eventService.Create(gctx.New(), event)
 		if err != nil {
 			log.Printf("insert event err: %v", err)
 		}

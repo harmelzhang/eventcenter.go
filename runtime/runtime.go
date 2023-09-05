@@ -3,8 +3,8 @@ package runtime
 import (
 	"errors"
 	"eventcenter-go/runtime/consts"
-	"eventcenter-go/runtime/plugin"
-	"eventcenter-go/runtime/plugin/storage/mongodb"
+	"eventcenter-go/runtime/plugins"
+	"eventcenter-go/runtime/plugins/storage/mongodb"
 	"eventcenter-go/runtime/server"
 	"eventcenter-go/runtime/server/grpc"
 	"eventcenter-go/runtime/server/http"
@@ -28,12 +28,12 @@ import (
 	_ "github.com/gogf/gf/contrib/drivers/mysql/v2"
 	_ "github.com/gogf/gf/contrib/nosql/redis/v2"
 	// 加载存储插件
-	_ "eventcenter-go/runtime/plugin/storage/database"
-	_ "eventcenter-go/runtime/plugin/storage/mongodb"
-	_ "eventcenter-go/runtime/plugin/storage/redis"
-	_ "eventcenter-go/runtime/plugin/storage/standalone"
+	_ "eventcenter-go/runtime/plugins/storage/database"
+	_ "eventcenter-go/runtime/plugins/storage/mongodb"
+	_ "eventcenter-go/runtime/plugins/storage/redis"
+	_ "eventcenter-go/runtime/plugins/storage/standalone"
 	// 加载连接器插件
-	_ "eventcenter-go/runtime/plugin/connector/standalone"
+	_ "eventcenter-go/runtime/plugins/connector/standalone"
 )
 
 // Start 启动所有服务
@@ -89,12 +89,12 @@ func LoadPlugins() error {
 
 		// 循环加载插件
 		for key, value := range cfg.MapStrVar() {
-			if key == plugin.TypeStorage {
+			if key == plugins.TypeStorage {
 				err = loadStoragePlugins(value)
 				if err != nil {
 					return err
 				}
-			} else if key == plugin.TypeConnector {
+			} else if key == plugins.TypeConnector {
 				err = loadConnectorPlugins(value)
 				if err != nil {
 					return err
@@ -115,13 +115,13 @@ func loadStoragePlugins(cfgVar *gvar.Var) error {
 
 	// 循环注册插件
 	for key, value := range config {
-		if key == plugin.NameActive {
+		if key == plugins.NameActive {
 			continue
 		}
 
 		configInfo := value.MapStrVar()
 
-		if key == plugin.NameStorageRedis {
+		if key == plugins.NameStorageRedis {
 			gredis.SetConfig(&gredis.Config{
 				Address:         configInfo["address"].String(),
 				Pass:            configInfo["password"].String(),
@@ -140,10 +140,10 @@ func loadStoragePlugins(cfgVar *gvar.Var) error {
 				TLS:             configInfo["tls"].Bool(),
 				TLSSkipVerify:   configInfo["tlsSkipVerify"].Bool(),
 				SlaveOnly:       configInfo["slaveOnly"].Bool(),
-			}, plugin.TypeStorage)
-		} else if key == plugin.NameStorageDB {
+			}, plugins.TypeStorage)
+		} else if key == plugins.NameStorageDB {
 			gdb.SetConfig(gdb.Config{
-				plugin.TypeStorage: gdb.ConfigGroup{
+				plugins.TypeStorage: gdb.ConfigGroup{
 					gdb.ConfigNode{
 						Host:             configInfo["host"].String(),
 						Port:             configInfo["port"].String(),
@@ -164,7 +164,7 @@ func loadStoragePlugins(cfgVar *gvar.Var) error {
 					},
 				},
 			})
-		} else if key == plugin.NameStorageMongodb {
+		} else if key == plugins.NameStorageMongodb {
 			clientOptions := options.Client().ApplyURI(configInfo["uri"].String())
 			ctx := gctx.New()
 			conn, err := mongo.Connect(ctx, clientOptions)
@@ -187,11 +187,11 @@ func loadStoragePlugins(cfgVar *gvar.Var) error {
 	}
 
 	// 激活插件
-	activePluginName := getActivePluginName(plugin.TypeStorage, config)
-	plugin.ActivePlugin(plugin.TypeStorage, activePluginName)
+	activePluginName := getActivePluginName(plugins.TypeStorage, config)
+	plugins.ActivePlugin(plugins.TypeStorage, activePluginName)
 
 	// 初始化插件
-	err := initPlugin(plugin.TypeStorage, activePluginName, config)
+	err := initPlugin(plugins.TypeStorage, activePluginName, config)
 	if err != nil {
 		return err
 	}
@@ -206,13 +206,13 @@ func loadConnectorPlugins(cfgVar *gvar.Var) error {
 
 	// 循环注册插件
 	for key, value := range config {
-		if key == plugin.NameActive {
+		if key == plugins.NameActive {
 			continue
 		}
 
 		configInfo := value.MapStrVar()
 
-		if key == plugin.NameConnectorRabbitMQ {
+		if key == plugins.NameConnectorRabbitMQ {
 			log.Println(configInfo)
 		} else {
 			err := errors.New(fmt.Sprintf("[connector] not support plug: %s", key))
@@ -221,11 +221,11 @@ func loadConnectorPlugins(cfgVar *gvar.Var) error {
 	}
 
 	// 激活插件
-	activePluginName := getActivePluginName(plugin.TypeConnector, config)
-	plugin.ActivePlugin(plugin.TypeConnector, activePluginName)
+	activePluginName := getActivePluginName(plugins.TypeConnector, config)
+	plugins.ActivePlugin(plugins.TypeConnector, activePluginName)
 
 	// 初始化插件
-	err := initPlugin(plugin.TypeConnector, activePluginName, config)
+	err := initPlugin(plugins.TypeConnector, activePluginName, config)
 	if err != nil {
 		return err
 	}
@@ -243,11 +243,11 @@ func registerPlugins() {
 
 // 获取激活插件名
 func getActivePluginName(pluginType string, config map[string]*gvar.Var) string {
-	active, isOK := config[plugin.NameActive]
+	active, isOK := config[plugins.NameActive]
 
-	activePluginName := plugin.NameStorageStandalone
-	if pluginType == plugin.TypeConnector {
-		activePluginName = plugin.NameConnectorStandalone
+	activePluginName := plugins.NameStorageStandalone
+	if pluginType == plugins.TypeConnector {
+		activePluginName = plugins.NameConnectorStandalone
 	}
 
 	if isOK {
@@ -266,9 +266,9 @@ func getActivePluginName(pluginType string, config map[string]*gvar.Var) string 
 // 初始化插件
 func initPlugin(pluginType, activePluginName string, config map[string]*gvar.Var) error {
 	// 初始化插件
-	p := plugin.Get(pluginType, activePluginName)
+	p := plugins.Get(pluginType, activePluginName)
 	cfg := make(map[string]*gvar.Var)
-	if activePluginName != plugin.NameStorageStandalone {
+	if activePluginName != plugins.NameStorageStandalone {
 		cfg = config[activePluginName].MapStrVar()
 	}
 

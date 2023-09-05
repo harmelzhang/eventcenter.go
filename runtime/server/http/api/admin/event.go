@@ -8,7 +8,7 @@ import (
 // 查询事件
 
 type QueryEventReq struct {
-	g.Meta    `path:"/" method:"get" tags:"事件" summary:"删除事件"`
+	g.Meta    `path:"/" method:"get" tags:"事件" summary:"查询事件"`
 	Source    string `p:"source" dc:"事件源"`
 	TopicName string `p:"topic" dc:"主题名称"`
 	Type      string `p:"type" dc:"事件类型"`
