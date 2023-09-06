@@ -17,6 +17,7 @@ type MessageQueue struct {
 	newMsg sync.Cond
 }
 
+// NewMessageQueue 新建消息队列
 func NewMessageQueue() (*MessageQueue, error) {
 	queue := &MessageQueue{
 		items: make([]*Message, 0),
@@ -26,6 +27,7 @@ func NewMessageQueue() (*MessageQueue, error) {
 	return queue, nil
 }
 
+// Put 放入消息
 func (queue *MessageQueue) Put(message *Message) {
 	queue.mutex.Lock()
 	defer queue.mutex.Unlock()
@@ -34,6 +36,7 @@ func (queue *MessageQueue) Put(message *Message) {
 	queue.newMsg.Signal()
 }
 
+// Pop 弹出消息
 func (queue *MessageQueue) Pop() *Message {
 	queue.mutex.Lock()
 	defer queue.mutex.Unlock()
@@ -56,16 +59,17 @@ type Broker struct {
 var once sync.Once
 var broker *Broker
 
+// GetBroker 获取 Broker
 func GetBroker() *Broker {
 	once.Do(func() {
 		broker = &Broker{
 			queueContainer: make(map[string]*MessageQueue),
 		}
-	},
-	)
+	})
 	return broker
 }
 
+// CreateNewQueueIfAbsent 如果消息队列不存在则新建一个
 func (b *Broker) CreateNewQueueIfAbsent(topicName string) (err error) {
 	if _, ok := b.queueContainer[topicName]; ok {
 		return
@@ -81,6 +85,7 @@ func (b *Broker) CreateNewQueueIfAbsent(topicName string) (err error) {
 	return
 }
 
+// PutMessage 放入消息
 func (b *Broker) PutMessage(topicName string, event *cloudevents.Event) (message *Message, err error) {
 	if err = b.CreateNewQueueIfAbsent(topicName); err != nil {
 		return
@@ -92,6 +97,7 @@ func (b *Broker) PutMessage(topicName string, event *cloudevents.Event) (message
 	return
 }
 
+// PopMessage 弹出消息
 func (b *Broker) PopMessage(topicName string) (*Message, error) {
 	if err := b.CreateNewQueueIfAbsent(topicName); err != nil {
 		return nil, err

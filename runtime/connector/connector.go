@@ -47,6 +47,7 @@ type Consumer interface {
 
 // EventHandler 事件处理器
 type EventHandler struct {
+	// Handler 处理函数
 	Handler HandlerFunc
 }
 

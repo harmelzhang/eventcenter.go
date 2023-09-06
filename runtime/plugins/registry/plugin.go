@@ -2,6 +2,6 @@ package registry
 
 import "eventcenter-go/runtime/plugins"
 
-type RegistryPlugin interface {
+type Plugin interface {
 	plugins.Plugin
 }

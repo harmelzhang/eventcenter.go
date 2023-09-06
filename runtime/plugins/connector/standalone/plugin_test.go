@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestMessage(t *testing.T) {
+func TestPlugin(t *testing.T) {
 	connPlugin := plugins.Get(plugins.TypeConnector, plugins.NameConnectorStandalone).(connectorPlugin.Plugin)
 	_ = connPlugin.Init(nil)
 
