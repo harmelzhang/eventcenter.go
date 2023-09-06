@@ -28,9 +28,8 @@ func (s *topicService) QueryByName(ctx context.Context, name string) (topic *mod
 }
 
 // Create 创建主题
-func (s *topicService) Create(ctx context.Context, name string) (topic *model.Topic, err error) {
+func (s *topicService) Create(ctx context.Context, topic *model.Topic) (err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
-		topic = &model.Topic{Id: uuid.NewString(), Name: name, CreateTime: time.Now()}
 		topicCache[topic.Id+":"+topic.Name] = topic
 	})
 	return
@@ -44,7 +43,8 @@ func (s *topicService) QueryOrCreateByName(ctx context.Context, name string) (to
 			g.Throw(err)
 		}
 		if topic == nil {
-			topic, err = s.Create(ctx, name)
+			topic = &model.Topic{Id: uuid.NewString(), Name: name, CreateTime: time.Now()}
+			err = s.Create(ctx, topic)
 			if err != nil {
 				g.Throw(err)
 			}

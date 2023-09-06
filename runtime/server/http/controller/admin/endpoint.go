@@ -39,7 +39,7 @@ func (c endpointController) Create(ctx context.Context, req *admin.CreateEndpoin
 		return
 	}
 
-	err = endpointService.Create(ctx, req.ServerName, req.TopicName, req.Type, req.Protocol, req.Url)
+	_, err = endpointService.Create(ctx, req.ServerName, req.TopicName, req.Type, req.Protocol, req.Url)
 
 	// TODO 队列操作
 

@@ -40,7 +40,7 @@ func (c processController) Subscribe(ctx context.Context, req *api.SubscribeReq)
 
 	if endpoint == nil {
 		// 创建
-		err = endpointService.Create(ctx, req.ServerName, topic.Name, req.Type, req.Protocol, req.Url)
+		_, err = endpointService.Create(ctx, req.ServerName, topic.Name, req.Type, req.Protocol, req.Url)
 		if err != nil {
 			return
 		}

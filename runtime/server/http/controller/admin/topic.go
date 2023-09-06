@@ -2,7 +2,10 @@ package admin
 
 import (
 	"context"
+	"eventcenter-go/runtime/model"
 	"eventcenter-go/runtime/server/http/api/admin"
+	"github.com/google/uuid"
+	"time"
 )
 
 type topicController struct{}
@@ -15,7 +18,8 @@ func (c topicController) Create(ctx context.Context, req *admin.CreateTopicReq) 
 	if topic != nil {
 		return
 	}
-	_, err = storagePlugin.TopicService().Create(ctx, req.Name)
+	topic = &model.Topic{Id: uuid.NewString(), Name: req.Name, CreateTime: time.Now()}
+	err = storagePlugin.TopicService().Create(ctx, topic)
 	return
 }
 

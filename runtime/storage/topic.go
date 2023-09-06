@@ -12,7 +12,7 @@ type TopicService interface {
 	QueryByName(ctx context.Context, name string) (topic *model.Topic, err error)
 
 	// Create 创建主题
-	Create(ctx context.Context, name string) (topic *model.Topic, err error)
+	Create(ctx context.Context, topic *model.Topic) (err error)
 
 	// QueryOrCreateByName 根据名称查询，如果查询不到则创建
 	QueryOrCreateByName(ctx context.Context, name string) (topic *model.Topic, err error)
