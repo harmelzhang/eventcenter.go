@@ -5,7 +5,7 @@ import (
 	"eventcenter-go/runtime/storage"
 )
 
-type StoragePlugin interface {
+type Plugin interface {
 	plugins.Plugin
 
 	// TopicService 主题数据访问层

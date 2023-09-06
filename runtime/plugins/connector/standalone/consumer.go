@@ -18,7 +18,8 @@ type consumer struct {
 
 func NewConsumer() connector.Consumer {
 	return &consumer{
-		broker: GetBroker(),
+		broker:     GetBroker(),
+		subscribes: make(map[string]*subscribeWorker),
 	}
 }
 
@@ -91,7 +92,10 @@ func (c *consumer) Unsubscribe(topicName string) (err error) {
 		return
 	}
 
-	// TODO
+	if worker, ok := c.subscribes[topicName]; ok {
+		delete(c.subscribes, topicName)
+		worker.stop()
+	}
 
 	return nil
 }
@@ -115,7 +119,7 @@ func (worker *subscribeWorker) run() {
 		case <-worker.quit:
 			return
 		default:
-			err := worker.pollMessage()
+			err := worker.popMessage()
 			if err != nil {
 				log.Printf("fail to poll message from broker, err=%v", err)
 				continue
@@ -128,8 +132,8 @@ func (worker *subscribeWorker) stop() {
 	worker.quit <- true
 }
 
-func (worker *subscribeWorker) pollMessage() (err error) {
-	message, err := worker.broker.GetMessage(worker.topicName)
+func (worker *subscribeWorker) popMessage() (err error) {
+	message, err := worker.broker.PopMessage(worker.topicName)
 
 	if err != nil {
 		return errors.New("get message from broker err")

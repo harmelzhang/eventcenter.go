@@ -10,10 +10,6 @@ type Message struct {
 	event *cloudevents.Event
 }
 
-func (msg *Message) GetTopicName() string {
-	return msg.event.Subject()
-}
-
 // MessageQueue 消息队列
 type MessageQueue struct {
 	items  []*Message
@@ -38,7 +34,7 @@ func (queue *MessageQueue) Put(message *Message) {
 	queue.newMsg.Signal()
 }
 
-func (queue *MessageQueue) Get() (*Message, error) {
+func (queue *MessageQueue) Pop() *Message {
 	queue.mutex.Lock()
 	defer queue.mutex.Unlock()
 
@@ -46,35 +42,10 @@ func (queue *MessageQueue) Get() (*Message, error) {
 		queue.newMsg.Wait()
 	}
 
-	return queue.items[0], nil
-}
+	message := queue.items[0]
+	queue.items = queue.items[1:]
 
-func (queue *MessageQueue) Take() *Message {
-	queue.mutex.Lock()
-	defer queue.mutex.Unlock()
-
-	if len(queue.items) > 0 {
-		return queue.items[0]
-	}
-
-	return nil
-}
-
-func (queue *MessageQueue) Pop() *Message {
-	queue.mutex.Lock()
-	defer queue.mutex.Unlock()
-
-	if len(queue.items) != 0 {
-		message := queue.items[0]
-		queue.items = queue.items[1:]
-		return message
-	}
-
-	return nil
-}
-
-func (queue *MessageQueue) Size() int {
-	return len(queue.items)
+	return message
 }
 
 // Broker 消息代理
@@ -121,9 +92,9 @@ func (b *Broker) PutMessage(topicName string, event *cloudevents.Event) (message
 	return
 }
 
-func (b *Broker) GetMessage(topicName string) (*Message, error) {
+func (b *Broker) PopMessage(topicName string) (*Message, error) {
 	if err := b.CreateNewQueueIfAbsent(topicName); err != nil {
 		return nil, err
 	}
-	return b.queueContainer[topicName].Get()
+	return b.queueContainer[topicName].Pop(), nil
 }

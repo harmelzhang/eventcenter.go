@@ -6,28 +6,28 @@ import (
 	"github.com/gogf/gf/v2/container/gvar"
 )
 
-type dataBasePlugin struct{}
+type plugin struct{}
 
 func init() {
-	plugins.Register(plugins.NameStorageDB, &dataBasePlugin{})
+	plugins.Register(plugins.NameStorageDB, &plugin{})
 }
 
-func (p *dataBasePlugin) Type() string {
+func (p *plugin) Type() string {
 	return plugins.TypeStorage
 }
 
-func (p *dataBasePlugin) Init(config map[string]*gvar.Var) error {
+func (p *plugin) Init(config map[string]*gvar.Var) error {
 	return nil
 }
 
-func (p *dataBasePlugin) TopicService() storage.TopicService {
+func (p *plugin) TopicService() storage.TopicService {
 	return tService
 }
 
-func (p *dataBasePlugin) EndpointService() storage.EndpointService {
+func (p *plugin) EndpointService() storage.EndpointService {
 	return epService
 }
 
-func (p *dataBasePlugin) EventService() storage.EventService {
+func (p *plugin) EventService() storage.EventService {
 	return eService
 }

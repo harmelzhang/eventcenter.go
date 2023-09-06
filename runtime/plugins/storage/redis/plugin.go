@@ -6,28 +6,28 @@ import (
 	"github.com/gogf/gf/v2/container/gvar"
 )
 
-type redisPlugin struct{}
+type plugin struct{}
 
 func init() {
-	plugins.Register(plugins.NameStorageRedis, &redisPlugin{})
+	plugins.Register(plugins.NameStorageRedis, &plugin{})
 }
 
-func (p *redisPlugin) Type() string {
+func (p *plugin) Type() string {
 	return plugins.TypeStorage
 }
 
-func (p *redisPlugin) Init(config map[string]*gvar.Var) error {
+func (p *plugin) Init(config map[string]*gvar.Var) error {
 	return nil
 }
 
-func (p *redisPlugin) TopicService() storage.TopicService {
+func (p *plugin) TopicService() storage.TopicService {
 	return tService
 }
 
-func (p *redisPlugin) EndpointService() storage.EndpointService {
+func (p *plugin) EndpointService() storage.EndpointService {
 	return epService
 }
 
-func (p *redisPlugin) EventService() storage.EventService {
+func (p *plugin) EventService() storage.EventService {
 	return eService
 }

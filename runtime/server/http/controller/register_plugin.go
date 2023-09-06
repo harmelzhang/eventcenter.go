@@ -6,15 +6,15 @@ import (
 	"eventcenter-go/runtime/plugins/storage"
 )
 
-var storagePlugin storage.StoragePlugin
-var connectorPlugin connector.ConnectorPlugin
+var storagePlugin storage.Plugin
+var connectorPlugin connector.Plugin
 
 // RegisterStoragePlugin 注册存储插件
 func RegisterStoragePlugin() {
-	storagePlugin = plugins.GetActivedPluginByType(plugins.TypeStorage).(storage.StoragePlugin)
+	storagePlugin = plugins.GetActivedPluginByType(plugins.TypeStorage).(storage.Plugin)
 }
 
 // RegisterConnectorPlugin 注册连接器插件
 func RegisterConnectorPlugin() {
-	connectorPlugin = plugins.GetActivedPluginByType(plugins.TypeConnector).(connector.ConnectorPlugin)
+	connectorPlugin = plugins.GetActivedPluginByType(plugins.TypeConnector).(connector.Plugin)
 }

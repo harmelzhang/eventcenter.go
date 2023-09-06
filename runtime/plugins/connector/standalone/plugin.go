@@ -6,20 +6,20 @@ import (
 	"github.com/gogf/gf/v2/container/gvar"
 )
 
-type standalonePlugin struct {
+type plugin struct {
 	consumer connector.Consumer
 	producer connector.Producer
 }
 
 func init() {
-	plugins.Register(plugins.NameConnectorStandalone, &standalonePlugin{})
+	plugins.Register(plugins.NameConnectorStandalone, &plugin{})
 }
 
-func (p *standalonePlugin) Type() string {
+func (p *plugin) Type() string {
 	return plugins.TypeConnector
 }
 
-func (p *standalonePlugin) Init(config map[string]*gvar.Var) (err error) {
+func (p *plugin) Init(config map[string]*gvar.Var) (err error) {
 	p.consumer = NewConsumer()
 	err = p.consumer.Start()
 	if err != nil {
@@ -35,10 +35,10 @@ func (p *standalonePlugin) Init(config map[string]*gvar.Var) (err error) {
 	return nil
 }
 
-func (p *standalonePlugin) Producer() (connector.Producer, error) {
+func (p *plugin) Producer() (connector.Producer, error) {
 	return p.producer, nil
 }
 
-func (p *standalonePlugin) Consumer() (connector.Consumer, error) {
+func (p *plugin) Consumer() (connector.Consumer, error) {
 	return p.consumer, nil
 }

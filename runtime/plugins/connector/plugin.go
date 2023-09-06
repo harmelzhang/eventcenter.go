@@ -5,7 +5,7 @@ import (
 	"eventcenter-go/runtime/plugins"
 )
 
-type ConnectorPlugin interface {
+type Plugin interface {
 	plugins.Plugin
 
 	// Producer 获取生产者
