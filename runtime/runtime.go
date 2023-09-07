@@ -2,8 +2,10 @@ package runtime
 
 import (
 	"errors"
+	"eventcenter-go/runtime/connector"
 	"eventcenter-go/runtime/consts"
 	"eventcenter-go/runtime/plugins"
+	connectorPlugin "eventcenter-go/runtime/plugins/connector"
 	"eventcenter-go/runtime/plugins/storage/mongodb"
 	"eventcenter-go/runtime/server"
 	"eventcenter-go/runtime/server/grpc"
@@ -230,15 +232,24 @@ func loadConnectorPlugins(cfgVar *gvar.Var) error {
 		return err
 	}
 
+	plugin := plugins.GetActivedPluginByType(plugins.TypeConnector).(connectorPlugin.Plugin)
+	consumer, err := plugin.Consumer()
+	if err != nil {
+		return err
+	}
+	consumer.RegisterHandler(connector.NewEventHandler())
+
 	return nil
 }
 
 // 注册插件
 func registerPlugins() {
+	// 存储
 	controller.RegisterStoragePlugin()
 	admin.RegisterStoragePlugin()
-
-	// controller.RegisterConnectorPlugin()
+	// 连接器
+	controller.RegisterConnectorPlugin()
+	admin.RegisterConnectorPlugin()
 }
 
 // 获取激活插件名

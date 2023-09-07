@@ -11,6 +11,9 @@ type TopicService interface {
 	// QueryByName 根据名称查询
 	QueryByName(ctx context.Context, name string) (topic *model.Topic, err error)
 
+	// QueryById 根据ID查询
+	QueryById(ctx context.Context, id string) (topic *model.Topic, err error)
+
 	// Create 创建主题
 	Create(ctx context.Context, topic *model.Topic) (err error)
 

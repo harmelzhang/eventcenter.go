@@ -61,7 +61,25 @@ func (c eventController) Create(ctx context.Context, req *admin.CreateEventReq) 
 		return
 	}
 
-	// TODO 队列操作
+	// 补偿订阅（防止启动时没有对应主题的消费者）
+	consumer, err := connectorPlugin.Consumer()
+	if err != nil {
+		return
+	}
+	err = consumer.Subscribe(event.Subject())
+	if err != nil {
+		return
+	}
+
+	// 发布
+	producer, err := connectorPlugin.Producer()
+	if err != nil {
+		return
+	}
+	err = producer.Publish(ctx, &event)
+	if err != nil {
+		return
+	}
 
 	return
 }

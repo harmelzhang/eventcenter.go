@@ -104,6 +104,17 @@ func (s *endpointService) Query(ctx context.Context, serverName, topicName, typ,
 	return
 }
 
+// QueryById 根据ID查询
+func (s *endpointService) QueryById(ctx context.Context, id string) (endpoint *model.Endpoint, err error) {
+	err = g.Try(ctx, func(ctx context.Context) {
+		err = DB(ctx, model.EndpointInfo.Table()).Where(model.EndpointInfo.Columns().Id, id).Scan(&endpoint)
+		if err != nil {
+			g.Throw(err)
+		}
+	})
+	return
+}
+
 // QueryByTopicAndServer 根据主题和服务查询
 func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, typ, serverName, protocol string) (endpoint *model.Endpoint, err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
@@ -122,6 +133,51 @@ func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, 
 		if err != nil {
 			g.Throw(err)
 		}
+	})
+	return
+}
+
+// QueryByTopicAndType 根据主题和类型查询
+func (s *endpointService) QueryByTopicAndType(ctx context.Context, topicName, typ string) (endpoints []*model.Endpoint, err error) {
+	endpoints = make([]*model.Endpoint, 0)
+	err = g.Try(ctx, func(ctx context.Context) {
+		topic, err := tService.QueryOrCreateByName(ctx, topicName)
+		if err != nil {
+			g.Throw(err)
+		}
+
+		dao := DB(ctx, model.EndpointInfo.Table())
+		dao = dao.Where(model.EndpointInfo.Columns().TopicId, topic.Id)
+		dao = dao.Where(model.EndpointInfo.Columns().Type, typ)
+
+		err = dao.Scan(&endpoints)
+		if err != nil {
+			g.Throw(err)
+		}
+	})
+	return
+}
+
+// QueryCountByTopic 根据主题查询数量
+func (s *endpointService) QueryCountByTopic(ctx context.Context, topicName string) (count int64, err error) {
+	err = g.Try(ctx, func(ctx context.Context) {
+		dao := DB(ctx, model.EndpointInfo.Table())
+		if topicName != "" {
+			topics, _, err := tService.Query(ctx, topicName, 0, -1)
+			if err != nil {
+				g.Throw(err)
+			}
+			topicIds := make([]string, 0)
+			for _, topic := range topics {
+				topicIds = append(topicIds, topic.Id)
+			}
+			dao = dao.Where(model.EndpointInfo.Columns().TopicId+" in (?)", topicIds)
+		}
+		cnt, err := dao.Count()
+		if err != nil {
+			g.Throw(err)
+		}
+		count = int64(cnt)
 	})
 	return
 }

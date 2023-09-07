@@ -20,6 +20,15 @@ type EndpointService interface {
 	// Query 查询终端
 	Query(ctx context.Context, serverName, topicName, typ, protocol string, offset, limit int) (endpoints []*model.Endpoint, count int64, err error)
 
+	// QueryById 根据ID查询
+	QueryById(ctx context.Context, id string) (endpoint *model.Endpoint, err error)
+
 	// QueryByTopicAndServer 根据主题和服务查询
 	QueryByTopicAndServer(ctx context.Context, topicName, typ, serverName, protocol string) (endpoint *model.Endpoint, err error)
+
+	// QueryByTopicAndType 根据主题和类型查询
+	QueryByTopicAndType(ctx context.Context, topicName, typ string) (endpoints []*model.Endpoint, err error)
+
+	// QueryCountByTopic 根据主题查询数量
+	QueryCountByTopic(ctx context.Context, topicName string) (count int64, err error)
 }

@@ -20,6 +20,10 @@ var ProcessController = new(processController)
 // Subscribe 订阅
 func (c processController) Subscribe(ctx context.Context, req *api.SubscribeReq) (resp *api.SubscribeRes, err error) {
 	// 校验地址
+	if req.Protocol != "http" {
+		err = errors.New("事件处理协议暂只支持HTTP")
+		return
+	}
 	if !(strings.HasPrefix(req.Url, "http://") || strings.HasPrefix(req.Url, "https://")) {
 		err = errors.New("事件处理地址协议暂只支持HTTP和HTTPS")
 		return
@@ -39,12 +43,20 @@ func (c processController) Subscribe(ctx context.Context, req *api.SubscribeReq)
 	}
 
 	if endpoint == nil {
-		// 创建
+		// 入库
 		_, err = endpointService.Create(ctx, req.ServerName, topic.Name, req.Type, req.Protocol, req.Url)
 		if err != nil {
 			return
 		}
-		// TODO 队列操作
+		// 订阅
+		consumer, err := connectorPlugin.Consumer()
+		if err != nil {
+			return resp, err
+		}
+		err = consumer.Subscribe(topic.Name)
+		if err != nil {
+			return resp, err
+		}
 	} else {
 		// 更新地址
 		if endpoint.Endpoint != req.Url {
@@ -69,8 +81,31 @@ func (c processController) Unsubscribe(ctx context.Context, req *api.Unsubscribe
 	}
 
 	err = endpointService.DeleteById(ctx, endpoint.Id)
+	if err != nil {
+		return
+	}
 
-	// TODO 队列操作
+	// 取消订阅
+	go func() {
+		ctx := context.TODO()
+		count, err := endpointService.QueryCountByTopic(ctx, req.TopicName)
+		if err != nil {
+			log.Printf("query count by topic err: %v", err)
+			return
+		}
+		if count == 0 {
+			consumer, err := connectorPlugin.Consumer()
+			if err != nil {
+				log.Printf("connector plugin get consumer err: %v", err)
+				return
+			}
+			err = consumer.Unsubscribe(req.TopicName)
+			if err != nil {
+				log.Printf("consumer unsubscribe topic [%s] err: %v", req.TopicName, err)
+				return
+			}
+		}
+	}()
 
 	return
 }
@@ -102,7 +137,25 @@ func (c processController) Trigger(ctx context.Context, req *api.TriggerReq) (re
 	}
 	event.SetTime(time.Now())
 
-	// TODO 队列操作
+	// 补偿订阅（防止启动时没有对应主题的消费者）
+	consumer, err := connectorPlugin.Consumer()
+	if err != nil {
+		return
+	}
+	err = consumer.Subscribe(event.Subject())
+	if err != nil {
+		return
+	}
+
+	// 发布
+	producer, err := connectorPlugin.Producer()
+	if err != nil {
+		return
+	}
+	err = producer.Publish(ctx, &event)
+	if err != nil {
+		return
+	}
 
 	// 入库
 	go func() {

@@ -7,9 +7,9 @@ import (
 
 func main() {
 	if err := runtime.LoadPlugins(); err != nil {
-		log.Fatalf("设置插件出错：%v", err)
+		log.Fatalf("load plugins err: %v", err)
 	}
 	if err := runtime.Start(); err != nil {
-		log.Fatalf("启动服务出错：%v", err)
+		log.Fatalf("start server err: %v", err)
 	}
 }

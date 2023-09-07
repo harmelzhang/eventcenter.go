@@ -172,6 +172,45 @@ func (s *endpointService) Query(ctx context.Context, serverName, topicName, typ,
 	return
 }
 
+// QueryById 根据ID查询
+func (s *endpointService) QueryById(ctx context.Context, id string) (endpoint *model.Endpoint, err error) {
+	err = g.Try(ctx, func(ctx context.Context) {
+		keys, err := DB(ctx).Keys(ctx, endpointKeyPrefix+":*")
+		if err != nil {
+			g.Throw(err)
+		}
+		if len(keys) == 0 {
+			return
+		}
+
+		values, err := DB(ctx).MGet(ctx, keys...)
+		if err != nil {
+			g.Throw(err)
+		}
+
+		endpoints := make([]*model.Endpoint, 0)
+		for _, value := range values {
+			ep := new(model.Endpoint)
+			err = json.Unmarshal(value.Bytes(), ep)
+			if err != nil {
+				g.Throw(err)
+			}
+			endpoints = append(endpoints, ep)
+		}
+		if len(endpoints) == 0 {
+			return
+		}
+
+		for _, ep := range endpoints {
+			if ep.Id == id {
+				endpoint = ep
+				return
+			}
+		}
+	})
+	return
+}
+
 // QueryByTopicAndServer 根据主题和服务查询
 func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, typ, serverName, protocol string) (endpoint *model.Endpoint, err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
@@ -212,6 +251,103 @@ func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, 
 				return
 			}
 		}
+	})
+	return
+}
+
+// QueryByTopicAndType 根据主题和类型查询
+func (s *endpointService) QueryByTopicAndType(ctx context.Context, topicName, typ string) (endpoints []*model.Endpoint, err error) {
+	endpoints = make([]*model.Endpoint, 0)
+	err = g.Try(ctx, func(ctx context.Context) {
+		keys, err := DB(ctx).Keys(ctx, endpointKeyPrefix+":*")
+		if err != nil {
+			g.Throw(err)
+		}
+		if len(keys) == 0 {
+			return
+		}
+
+		values, err := DB(ctx).MGet(ctx, keys...)
+		if err != nil {
+			g.Throw(err)
+		}
+
+		eps := make([]*model.Endpoint, 0)
+		for _, value := range values {
+			ep := new(model.Endpoint)
+			err = json.Unmarshal(value.Bytes(), ep)
+			if err != nil {
+				g.Throw(err)
+			}
+			eps = append(eps, ep)
+		}
+		if len(eps) == 0 {
+			return
+		}
+
+		topic, err := tService.QueryOrCreateByName(ctx, topicName)
+		if err != nil {
+			g.Throw(err)
+		}
+
+		for _, ep := range eps {
+			if ep.TopicId == topic.Id && ep.Type == typ {
+				endpoints = append(endpoints, ep)
+			}
+		}
+	})
+	return
+}
+
+// QueryCountByTopic 根据主题查询数量
+func (s *endpointService) QueryCountByTopic(ctx context.Context, topicName string) (count int64, err error) {
+	err = g.Try(ctx, func(ctx context.Context) {
+		keys, err := DB(ctx).Keys(ctx, endpointKeyPrefix+":*")
+		if err != nil {
+			g.Throw(err)
+		}
+		if len(keys) == 0 {
+			return
+		}
+
+		values, err := DB(ctx).MGet(ctx, keys...)
+		if err != nil {
+			g.Throw(err)
+		}
+
+		endpoints := make([]*model.Endpoint, 0)
+		for _, value := range values {
+			endpoint := new(model.Endpoint)
+			err = json.Unmarshal(value.Bytes(), endpoint)
+			if err != nil {
+				g.Throw(err)
+			}
+			endpoints = append(endpoints, endpoint)
+		}
+
+		if topicName != "" {
+			topics, _, err := tService.Query(ctx, topicName, 0, -1)
+			if err != nil {
+				g.Throw(err)
+			}
+			topicIds := make([]string, 0)
+			for _, topic := range topics {
+				topicIds = append(topicIds, topic.Id)
+			}
+			// 过滤
+			filter := make([]*model.Endpoint, 0)
+			for _, endpoint := range endpoints {
+				for _, topicId := range topicIds {
+					if endpoint.TopicId == topicId {
+						filter = append(filter, endpoint)
+						break
+					}
+				}
+			}
+			endpoints = filter
+		}
+
+		count = int64(len(endpoints))
 	})
 	return
 }

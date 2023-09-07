@@ -43,6 +43,31 @@ func (s *topicService) QueryByName(ctx context.Context, name string) (topic *mod
 	return
 }
 
+// QueryById 根据ID查询
+func (s *topicService) QueryById(ctx context.Context, id string) (topic *model.Topic, err error) {
+	err = g.Try(ctx, func(ctx context.Context) {
+		keys, err := DB(ctx).Keys(ctx, topicKeyPrefix+":"+id+":*")
+		if err != nil {
+			g.Throw(err)
+		}
+		for _, key := range keys {
+			if strings.HasPrefix(key, ":"+id+":") {
+				value, err := DB(ctx).Get(ctx, key)
+				if err != nil {
+					g.Throw(err)
+				}
+				topic = new(model.Topic)
+				err = json.Unmarshal(value.Bytes(), topic)
+				if err != nil {
+					g.Throw(err)
+				}
+				return
+			}
+		}
+	})
+	return
+}
+
 // Create 创建主题
 func (s *topicService) Create(ctx context.Context, topic *model.Topic) (err error) {
 	err = g.Try(ctx, func(ctx context.Context) {

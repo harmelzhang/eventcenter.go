@@ -121,6 +121,17 @@ func (s *endpointService) Query(ctx context.Context, serverName, topicName, typ,
 	return
 }
 
+// QueryById 根据ID查询
+func (s *endpointService) QueryById(ctx context.Context, id string) (endpoint *model.Endpoint, err error) {
+	err = g.Try(ctx, func(ctx context.Context) {
+		err = DB(ctx, model.EndpointInfo.Table()).QuerySet().Q(model.EndpointInfo.Columns().Id, id).One(&endpoint)
+		if err != nil {
+			g.Throw(err)
+		}
+	})
+	return
+}
+
 // QueryByTopicAndServer 根据主题和服务查询
 func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, typ, serverName, protocol string) (endpoint *model.Endpoint, err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
@@ -139,6 +150,47 @@ func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, 
 		if err != nil {
 			g.Throw(err)
 		}
+	})
+	return
+}
+
+// QueryByTopicAndType 根据主题和类型查询
+func (s *endpointService) QueryByTopicAndType(ctx context.Context, topicName, typ string) (endpoints []*model.Endpoint, err error) {
+	endpoints = make([]*model.Endpoint, 0)
+	err = g.Try(ctx, func(ctx context.Context) {
+		topic, err := tService.QueryOrCreateByName(ctx, topicName)
+		if err != nil {
+			g.Throw(err)
+		}
+
+		qs := DB(ctx, model.EndpointInfo.Table()).QuerySet()
+		qs.Q(model.EndpointInfo.Columns().TopicId, topic.Id)
+		qs.Q(model.EndpointInfo.Columns().Type, typ)
+
+		err = qs.One(&endpoints)
+		if err != nil {
+			g.Throw(err)
+		}
+	})
+	return
+}
+
+// QueryCountByTopic 根据主题查询数量
+func (s *endpointService) QueryCountByTopic(ctx context.Context, topicName string) (count int64, err error) {
+	err = g.Try(ctx, func(ctx context.Context) {
+		qs := DB(ctx, model.EndpointInfo.Table()).QuerySet()
+		if topicName != "" {
+			topics, _, err := tService.Query(ctx, topicName, 0, -1)
+			if err != nil {
+				g.Throw(err)
+			}
+			topicIds := make([]string, 0)
+			for _, topic := range topics {
+				topicIds = append(topicIds, topic.Id)
+			}
+			qs.Q(model.EndpointInfo.Columns().TopicId, bson.M{"$in": topicIds})
+		}
+		count, err = qs.Count()
 	})
 	return
 }

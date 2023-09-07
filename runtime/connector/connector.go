@@ -44,12 +44,3 @@ type Consumer interface {
 	// RegisterHandler 注册事件处理器
 	RegisterHandler(handler *EventHandler)
 }
-
-// EventHandler 事件处理器
-type EventHandler struct {
-	// Handler 处理函数
-	Handler HandlerFunc
-}
-
-// HandlerFunc 处理函数
-type HandlerFunc func(event *cloudevents.Event) (err error)

@@ -23,6 +23,17 @@ func (s *topicService) QueryByName(ctx context.Context, name string) (topic *mod
 	return
 }
 
+// QueryById 根据ID查询
+func (s *topicService) QueryById(ctx context.Context, id string) (topic *model.Topic, err error) {
+	err = g.Try(ctx, func(ctx context.Context) {
+		err = DB(ctx, model.TopicInfo.Table()).Where(model.TopicInfo.Columns().Id, id).Scan(&topic)
+		if err != nil {
+			g.Throw(err)
+		}
+	})
+	return
+}
+
 // Create 创建主题
 func (s *topicService) Create(ctx context.Context, topic *model.Topic) (err error) {
 	err = g.Try(ctx, func(ctx context.Context) {

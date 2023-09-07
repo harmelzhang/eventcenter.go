@@ -3,6 +3,7 @@ package standalone
 import (
 	"errors"
 	"eventcenter-go/runtime/connector"
+	"fmt"
 	"go.uber.org/atomic"
 	"log"
 	"sync"
@@ -79,7 +80,7 @@ func (c *consumer) Subscribe(topicName string) (err error) {
 			broker:    broker,
 			topicName: topicName,
 			handler:   c.handler,
-			quit:      make(chan bool),
+			quit:      make(chan bool, 1),
 		}
 		c.subscribes[topicName] = worker
 
@@ -129,7 +130,7 @@ func (worker *subscribeWorker) run() {
 		default:
 			err := worker.popMessage()
 			if err != nil {
-				log.Printf("fail to poll message from broker, err=%v", err)
+				log.Printf("fail to pop message from broker: %v", err)
 				continue
 			}
 		}
@@ -144,7 +145,7 @@ func (worker *subscribeWorker) popMessage() (err error) {
 	message, err := worker.broker.PopMessage(worker.topicName)
 
 	if err != nil {
-		return errors.New("get message from broker err")
+		return errors.New(fmt.Sprintf("get message from broker err: %v", err))
 	}
 
 	err = worker.handler.Handler(message.event)
