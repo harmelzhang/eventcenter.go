@@ -76,7 +76,7 @@ func (c processController) Unsubscribe(ctx context.Context, req *api.Unsubscribe
 	endpointService := storagePlugin.EndpointService()
 
 	endpoint, err := endpointService.QueryByTopicAndServer(ctx, req.TopicName, req.Type, req.ServerName, req.Protocol)
-	if err != nil {
+	if err != nil || endpoint == nil {
 		return
 	}
 

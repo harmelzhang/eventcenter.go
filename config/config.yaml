@@ -29,7 +29,13 @@ plugins:
       maxIdle: 10  # 允许闲置的最大连接数
 
   connector:  # 连接器
-    active: "standalone"  # 不配置 active 则存储在内存中，或者配置 standalone
+    active: "redis"  # 不配置 active 则存储在内存中，或者配置 standalone
+    redis:
+      address: "192.168.0.249:16379"
+      password: "6HgjpHyTzeREdX46"
+      db: 2
+      minIdle: 5  # 允许闲置的最小连接数
+      maxIdle: 10  # 允许闲置的最大连接数
     rabbitmq:
       uri: "amqp://root:root@192.168.2.249:5672/eventcenter"
       exchange: "bus"

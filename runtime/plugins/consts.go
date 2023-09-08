@@ -19,6 +19,7 @@ const (
 	TypeConnector = "connector"
 
 	NameConnectorStandalone = "standalone" // Standalone
+	NameConnectorRedis      = "redis"      // Redis
 	NameConnectorRabbitMQ   = "rabbitmq"   // RabbitMQ
 	NameConnectorRocketMQ   = "rocketmq"   // RocketMQ
 	NameConnectorKafka      = "kafka"      // Kafka

@@ -35,6 +35,7 @@ import (
 	_ "eventcenter-go/runtime/plugins/storage/redis"
 	_ "eventcenter-go/runtime/plugins/storage/standalone"
 	// 加载连接器插件
+	_ "eventcenter-go/runtime/plugins/connector/redis"
 	_ "eventcenter-go/runtime/plugins/connector/standalone"
 )
 
@@ -214,8 +215,28 @@ func loadConnectorPlugins(cfgVar *gvar.Var) error {
 
 		configInfo := value.MapStrVar()
 
-		if key == plugins.NameConnectorRabbitMQ {
-			log.Println(configInfo)
+		if key == plugins.NameConnectorRedis {
+			gredis.SetConfig(&gredis.Config{
+				Address:         configInfo["address"].String(),
+				Pass:            configInfo["password"].String(),
+				Db:              configInfo["db"].Int(),
+				User:            configInfo["user"].String(),
+				MinIdle:         configInfo["minIdle"].Int(),
+				MaxIdle:         configInfo["maxIdle"].Int(),
+				MaxActive:       configInfo["maxActive"].Int(),
+				MaxConnLifetime: configInfo["maxConnLifetime"].Duration() * time.Second,
+				IdleTimeout:     configInfo["idleTimeout"].Duration() * time.Second,
+				WaitTimeout:     configInfo["waitTimeout"].Duration() * time.Second,
+				DialTimeout:     configInfo["dialTimeout"].Duration() * time.Second,
+				ReadTimeout:     configInfo["readTimeout"].Duration() * time.Second,
+				WriteTimeout:    configInfo["writeTimeout"].Duration() * time.Second,
+				MasterName:      configInfo["masterName"].String(),
+				TLS:             configInfo["tls"].Bool(),
+				TLSSkipVerify:   configInfo["tlsSkipVerify"].Bool(),
+				SlaveOnly:       configInfo["slaveOnly"].Bool(),
+			}, plugins.TypeConnector)
+		} else if key == plugins.NameConnectorRabbitMQ {
+
 		} else {
 			err := errors.New(fmt.Sprintf("[connector] not support plug: %s", key))
 			return err
