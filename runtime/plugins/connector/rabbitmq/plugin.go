@@ -4,11 +4,11 @@ import (
 	"eventcenter-go/runtime/connector"
 	"eventcenter-go/runtime/plugins"
 	"github.com/gogf/gf/v2/container/gvar"
-	"go.uber.org/atomic"
 )
 
 type plugin struct {
-	started atomic.Bool
+	consumer connector.Consumer
+	producer connector.Producer
 }
 
 func init() {
@@ -21,16 +21,27 @@ func (p *plugin) Type() string {
 }
 
 // Init 初始化
-func (p *plugin) Init(config map[string]*gvar.Var) error {
+func (p *plugin) Init(config map[string]*gvar.Var) (err error) {
+	p.consumer = NewConsumer(config)
+	err = p.consumer.Start()
+	if err != nil {
+		return
+	}
+
+	p.producer = NewProducer(config)
+	err = p.producer.Start()
+	if err != nil {
+		return
+	}
 	return nil
 }
 
 // Producer 获取生产者
 func (p *plugin) Producer() (connector.Producer, error) {
-	return nil, nil
+	return p.producer, nil
 }
 
 // Consumer 获取消费者
 func (p *plugin) Consumer() (connector.Consumer, error) {
-	return nil, nil
+	return p.consumer, nil
 }

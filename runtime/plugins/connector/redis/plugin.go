@@ -4,6 +4,8 @@ import (
 	"eventcenter-go/runtime/connector"
 	"eventcenter-go/runtime/plugins"
 	"github.com/gogf/gf/v2/container/gvar"
+	"github.com/gogf/gf/v2/database/gredis"
+	"time"
 )
 
 type plugin struct {
@@ -22,6 +24,26 @@ func (p *plugin) Type() string {
 
 // Init 初始化
 func (p *plugin) Init(config map[string]*gvar.Var) (err error) {
+	gredis.SetConfig(&gredis.Config{
+		Address:         config["address"].String(),
+		Pass:            config["password"].String(),
+		Db:              config["db"].Int(),
+		User:            config["user"].String(),
+		MinIdle:         config["minIdle"].Int(),
+		MaxIdle:         config["maxIdle"].Int(),
+		MaxActive:       config["maxActive"].Int(),
+		MaxConnLifetime: config["maxConnLifetime"].Duration() * time.Second,
+		IdleTimeout:     config["idleTimeout"].Duration() * time.Second,
+		WaitTimeout:     config["waitTimeout"].Duration() * time.Second,
+		DialTimeout:     config["dialTimeout"].Duration() * time.Second,
+		ReadTimeout:     config["readTimeout"].Duration() * time.Second,
+		WriteTimeout:    config["writeTimeout"].Duration() * time.Second,
+		MasterName:      config["masterName"].String(),
+		TLS:             config["tls"].Bool(),
+		TLSSkipVerify:   config["tlsSkipVerify"].Bool(),
+		SlaveOnly:       config["slaveOnly"].Bool(),
+	}, plugins.TypeConnector)
+
 	p.consumer = NewConsumer()
 	err = p.consumer.Start()
 	if err != nil {

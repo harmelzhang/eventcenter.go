@@ -4,6 +4,9 @@ import (
 	"eventcenter-go/runtime/plugins"
 	"eventcenter-go/runtime/storage"
 	"github.com/gogf/gf/v2/container/gvar"
+	"github.com/gogf/gf/v2/os/gctx"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type plugin struct{}
@@ -19,6 +22,21 @@ func (p *plugin) Type() string {
 
 // Init 初始化
 func (p *plugin) Init(config map[string]*gvar.Var) error {
+	clientOptions := options.Client().ApplyURI(config["uri"].String())
+	ctx := gctx.New()
+	conn, err := mongo.Connect(ctx, clientOptions)
+	poolSize := config["poolSize"].Uint64()
+	if poolSize > 0 {
+		clientOptions.SetMaxPoolSize(poolSize)
+	}
+	if err != nil {
+		return err
+	}
+	err = conn.Ping(ctx, nil)
+	if err != nil {
+		return err
+	}
+	InitDB(conn.Database(config["database"].String()))
 	return nil
 }
 

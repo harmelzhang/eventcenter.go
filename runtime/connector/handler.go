@@ -40,7 +40,7 @@ func NewEventHandler() *EventHandler {
 					go httpHandler(endpoint, event)
 				case consts.ProtocolTCP:
 					go tcpHandler(endpoint, event)
-				case consts.ConfigGrpc:
+				case consts.ProtocolGrpc:
 					go grpcHandler(endpoint, event)
 				default:
 					log.Printf("not support handler protocol: %s", endpoint.Protocol)

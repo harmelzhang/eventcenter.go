@@ -1,28 +1,20 @@
 package runtime
 
 import (
-	"errors"
 	"eventcenter-go/runtime/connector"
 	"eventcenter-go/runtime/consts"
 	"eventcenter-go/runtime/plugins"
 	connectorPlugin "eventcenter-go/runtime/plugins/connector"
-	"eventcenter-go/runtime/plugins/storage/mongodb"
 	"eventcenter-go/runtime/server"
 	"eventcenter-go/runtime/server/grpc"
 	"eventcenter-go/runtime/server/http"
 	"eventcenter-go/runtime/server/http/controller"
 	"eventcenter-go/runtime/server/http/controller/admin"
 	"eventcenter-go/runtime/server/tcp"
-	"fmt"
 	"github.com/gogf/gf/v2/container/gvar"
-	"github.com/gogf/gf/v2/database/gdb"
-	"github.com/gogf/gf/v2/database/gredis"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gctx"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
-	"time"
 )
 
 import (
@@ -92,16 +84,9 @@ func LoadPlugins() error {
 
 		// 循环加载插件
 		for key, value := range cfg.MapStrVar() {
-			if key == plugins.TypeStorage {
-				err = loadStoragePlugins(value)
-				if err != nil {
-					return err
-				}
-			} else if key == plugins.TypeConnector {
-				err = loadConnectorPlugins(value)
-				if err != nil {
-					return err
-				}
+			err = loadPlugins(key, value.MapStrVar())
+			if err != nil {
+				return err
 			}
 		}
 
@@ -111,154 +96,26 @@ func LoadPlugins() error {
 	return nil
 }
 
-// 加载存储插件
-func loadStoragePlugins(cfgVar *gvar.Var) error {
-	// 加载配置
-	config := cfgVar.MapStrVar()
-
-	// 循环注册插件
-	for key, value := range config {
-		if key == plugins.NameActive {
-			continue
-		}
-
-		configInfo := value.MapStrVar()
-
-		if key == plugins.NameStorageRedis {
-			gredis.SetConfig(&gredis.Config{
-				Address:         configInfo["address"].String(),
-				Pass:            configInfo["password"].String(),
-				Db:              configInfo["db"].Int(),
-				User:            configInfo["user"].String(),
-				MinIdle:         configInfo["minIdle"].Int(),
-				MaxIdle:         configInfo["maxIdle"].Int(),
-				MaxActive:       configInfo["maxActive"].Int(),
-				MaxConnLifetime: configInfo["maxConnLifetime"].Duration() * time.Second,
-				IdleTimeout:     configInfo["idleTimeout"].Duration() * time.Second,
-				WaitTimeout:     configInfo["waitTimeout"].Duration() * time.Second,
-				DialTimeout:     configInfo["dialTimeout"].Duration() * time.Second,
-				ReadTimeout:     configInfo["readTimeout"].Duration() * time.Second,
-				WriteTimeout:    configInfo["writeTimeout"].Duration() * time.Second,
-				MasterName:      configInfo["masterName"].String(),
-				TLS:             configInfo["tls"].Bool(),
-				TLSSkipVerify:   configInfo["tlsSkipVerify"].Bool(),
-				SlaveOnly:       configInfo["slaveOnly"].Bool(),
-			}, plugins.TypeStorage)
-		} else if key == plugins.NameStorageDB {
-			gdb.SetConfig(gdb.Config{
-				plugins.TypeStorage: gdb.ConfigGroup{
-					gdb.ConfigNode{
-						Host:             configInfo["host"].String(),
-						Port:             configInfo["port"].String(),
-						User:             configInfo["user"].String(),
-						Pass:             configInfo["password"].String(),
-						Name:             configInfo["name"].String(),
-						Type:             configInfo["type"].String(),
-						Link:             configInfo["link"].String(),
-						Extra:            configInfo["extra"].String(),
-						Role:             configInfo["role"].String(),
-						Debug:            configInfo["debug"].Bool(),
-						Charset:          configInfo["charset"].String(),
-						Prefix:           configInfo["prefix"].String(),
-						Weight:           configInfo["weight"].Int(),
-						MaxIdleConnCount: configInfo["maxIdle"].Int(),
-						MaxOpenConnCount: configInfo["maxOpen"].Int(),
-						MaxConnLifeTime:  configInfo["maxLifetime"].Duration() * time.Second,
-					},
-				},
-			})
-		} else if key == plugins.NameStorageMongodb {
-			clientOptions := options.Client().ApplyURI(configInfo["uri"].String())
-			ctx := gctx.New()
-			conn, err := mongo.Connect(ctx, clientOptions)
-			poolSize := configInfo["poolSize"].Uint64()
-			if poolSize > 0 {
-				clientOptions.SetMaxPoolSize(poolSize)
-			}
-			if err != nil {
-				return err
-			}
-			err = conn.Ping(ctx, nil)
-			if err != nil {
-				return err
-			}
-			mongodb.InitDB(conn.Database(configInfo["database"].String()))
-		} else {
-			err := errors.New(fmt.Sprintf("[storage] not support plug: %s", key))
-			return err
-		}
-	}
-
+// 加载插件
+func loadPlugins(pluginType string, config map[string]*gvar.Var) error {
 	// 激活插件
-	activePluginName := getActivePluginName(plugins.TypeStorage, config)
-	plugins.ActivePlugin(plugins.TypeStorage, activePluginName)
+	activePluginName := getActivePluginName(pluginType, config)
+	plugins.ActivePlugin(pluginType, activePluginName)
 
 	// 初始化插件
-	err := initPlugin(plugins.TypeStorage, activePluginName, config)
+	err := initPlugin(pluginType, activePluginName, config)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-// 加载连接器插件
-func loadConnectorPlugins(cfgVar *gvar.Var) error {
-	// 加载配置
-	config := cfgVar.MapStrVar()
-
-	// 循环注册插件
-	for key, value := range config {
-		if key == plugins.NameActive {
-			continue
-		}
-
-		configInfo := value.MapStrVar()
-
-		if key == plugins.NameConnectorRedis {
-			gredis.SetConfig(&gredis.Config{
-				Address:         configInfo["address"].String(),
-				Pass:            configInfo["password"].String(),
-				Db:              configInfo["db"].Int(),
-				User:            configInfo["user"].String(),
-				MinIdle:         configInfo["minIdle"].Int(),
-				MaxIdle:         configInfo["maxIdle"].Int(),
-				MaxActive:       configInfo["maxActive"].Int(),
-				MaxConnLifetime: configInfo["maxConnLifetime"].Duration() * time.Second,
-				IdleTimeout:     configInfo["idleTimeout"].Duration() * time.Second,
-				WaitTimeout:     configInfo["waitTimeout"].Duration() * time.Second,
-				DialTimeout:     configInfo["dialTimeout"].Duration() * time.Second,
-				ReadTimeout:     configInfo["readTimeout"].Duration() * time.Second,
-				WriteTimeout:    configInfo["writeTimeout"].Duration() * time.Second,
-				MasterName:      configInfo["masterName"].String(),
-				TLS:             configInfo["tls"].Bool(),
-				TLSSkipVerify:   configInfo["tlsSkipVerify"].Bool(),
-				SlaveOnly:       configInfo["slaveOnly"].Bool(),
-			}, plugins.TypeConnector)
-		} else if key == plugins.NameConnectorRabbitMQ {
-
-		} else {
-			err := errors.New(fmt.Sprintf("[connector] not support plug: %s", key))
+	if pluginType == plugins.TypeConnector {
+		plugin := plugins.GetActivedPluginByType(plugins.TypeConnector).(connectorPlugin.Plugin)
+		consumer, err := plugin.Consumer()
+		if err != nil {
 			return err
 		}
+		consumer.RegisterHandler(connector.NewEventHandler())
 	}
-
-	// 激活插件
-	activePluginName := getActivePluginName(plugins.TypeConnector, config)
-	plugins.ActivePlugin(plugins.TypeConnector, activePluginName)
-
-	// 初始化插件
-	err := initPlugin(plugins.TypeConnector, activePluginName, config)
-	if err != nil {
-		return err
-	}
-
-	plugin := plugins.GetActivedPluginByType(plugins.TypeConnector).(connectorPlugin.Plugin)
-	consumer, err := plugin.Consumer()
-	if err != nil {
-		return err
-	}
-	consumer.RegisterHandler(connector.NewEventHandler())
 
 	return nil
 }

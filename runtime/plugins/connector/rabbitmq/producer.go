@@ -5,19 +5,22 @@ import (
 	"errors"
 	"eventcenter-go/runtime/connector"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/gogf/gf/v2/container/gvar"
 	"go.uber.org/atomic"
 )
 
 type producer struct {
+	config  map[string]*gvar.Var
 	started atomic.Bool
 }
 
-func NewProducer() connector.Producer {
-	return &producer{}
+func NewProducer(config map[string]*gvar.Var) connector.Producer {
+	return &producer{config: config}
 }
 
 // Init 初始化
 func (p *producer) Init() error {
+
 	return nil
 }
 

@@ -4,6 +4,8 @@ import (
 	"eventcenter-go/runtime/plugins"
 	"eventcenter-go/runtime/storage"
 	"github.com/gogf/gf/v2/container/gvar"
+	"github.com/gogf/gf/v2/database/gdb"
+	"time"
 )
 
 type plugin struct{}
@@ -19,6 +21,28 @@ func (p *plugin) Type() string {
 
 // Init 初始化
 func (p *plugin) Init(config map[string]*gvar.Var) error {
+	gdb.SetConfig(gdb.Config{
+		plugins.TypeStorage: gdb.ConfigGroup{
+			gdb.ConfigNode{
+				Host:             config["host"].String(),
+				Port:             config["port"].String(),
+				User:             config["user"].String(),
+				Pass:             config["password"].String(),
+				Name:             config["name"].String(),
+				Type:             config["type"].String(),
+				Link:             config["link"].String(),
+				Extra:            config["extra"].String(),
+				Role:             config["role"].String(),
+				Debug:            config["debug"].Bool(),
+				Charset:          config["charset"].String(),
+				Prefix:           config["prefix"].String(),
+				Weight:           config["weight"].Int(),
+				MaxIdleConnCount: config["maxIdle"].Int(),
+				MaxOpenConnCount: config["maxOpen"].Int(),
+				MaxConnLifeTime:  config["maxLifetime"].Duration() * time.Second,
+			},
+		},
+	})
 	return nil
 }
 

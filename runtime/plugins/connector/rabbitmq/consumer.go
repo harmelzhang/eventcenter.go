@@ -3,18 +3,20 @@ package rabbitmq
 import (
 	"errors"
 	"eventcenter-go/runtime/connector"
+	"github.com/gogf/gf/v2/container/gvar"
 	"go.uber.org/atomic"
 	"sync"
 )
 
 type consumer struct {
+	config  map[string]*gvar.Var
 	handler *connector.EventHandler
 	started atomic.Bool
 	mutex   sync.Mutex
 }
 
-func NewConsumer() connector.Consumer {
-	return &consumer{}
+func NewConsumer(config map[string]*gvar.Var) connector.Consumer {
+	return &consumer{config: config}
 }
 
 // Init 初始化

@@ -11,14 +11,11 @@ import (
 )
 
 type producer struct {
-	//broker  *Broker
 	started atomic.Bool
 }
 
 func NewProducer() connector.Producer {
-	return &producer{
-		//broker: GetBroker(),
-	}
+	return &producer{}
 }
 
 // Init 初始化
