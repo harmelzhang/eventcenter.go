@@ -23,12 +23,20 @@ func (p *plugin) Type() string {
 // Init 初始化
 func (p *plugin) Init(config map[string]*gvar.Var) (err error) {
 	p.consumer = NewConsumer(config)
+	err = p.consumer.Init() // 准备 Exchange
+	if err != nil {
+		return
+	}
 	err = p.consumer.Start()
 	if err != nil {
 		return
 	}
 
 	p.producer = NewProducer(config)
+	err = p.producer.Init() // 准备 Exchange
+	if err != nil {
+		return
+	}
 	err = p.producer.Start()
 	if err != nil {
 		return

@@ -2,10 +2,12 @@ package rabbitmq
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"eventcenter-go/runtime/connector"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/gogf/gf/v2/container/gvar"
+	"github.com/streadway/amqp"
 	"go.uber.org/atomic"
 )
 
@@ -20,6 +22,30 @@ func NewProducer(config map[string]*gvar.Var) connector.Producer {
 
 // Init 初始化
 func (p *producer) Init() error {
+	conn, err := amqp.Dial(p.config["uri"].String())
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
+
+	err = ch.ExchangeDeclare(
+		p.config["exchange"].String(),
+		"direct",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -53,7 +79,26 @@ func (p *producer) Publish(ctx context.Context, event *cloudevents.Event) (err e
 		return
 	}
 
-	// TODO 发布
+	conn, err := amqp.Dial(p.config["uri"].String())
+	if err != nil {
+		return
+	}
+	defer func() { _ = conn.Close() }()
 
-	return nil
+	ch, err := conn.Channel()
+	if err != nil {
+		return
+	}
+	defer func() { _ = ch.Close() }()
+
+	data, err := json.Marshal(event)
+	if err != nil {
+		return
+	}
+
+	err = ch.Publish(p.config["exchange"].String(), event.Subject(), false, false, amqp.Publishing{
+		Body: data,
+	})
+
+	return err
 }

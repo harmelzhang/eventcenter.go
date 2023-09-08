@@ -9,7 +9,7 @@ import (
 type plugin struct{}
 
 func init() {
-	plugins.Register(plugins.NameStorageStandalone, &plugin{})
+	plugins.Register(plugins.NameStandalone, &plugin{})
 }
 
 // Type 插件类型

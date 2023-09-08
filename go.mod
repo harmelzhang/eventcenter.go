@@ -8,6 +8,7 @@ require (
 	github.com/gogf/gf/contrib/nosql/redis/v2 v2.5.2
 	github.com/gogf/gf/v2 v2.5.2
 	github.com/google/uuid v1.3.0
+	github.com/streadway/amqp v1.1.0
 	go.mongodb.org/mongo-driver v1.12.1
 	go.uber.org/atomic v1.4.0
 )

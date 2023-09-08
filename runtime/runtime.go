@@ -27,6 +27,7 @@ import (
 	_ "eventcenter-go/runtime/plugins/storage/redis"
 	_ "eventcenter-go/runtime/plugins/storage/standalone"
 	// 加载连接器插件
+	_ "eventcenter-go/runtime/plugins/connector/rabbitmq"
 	_ "eventcenter-go/runtime/plugins/connector/redis"
 	_ "eventcenter-go/runtime/plugins/connector/standalone"
 )
@@ -134,10 +135,7 @@ func registerPlugins() {
 func getActivePluginName(pluginType string, config map[string]*gvar.Var) string {
 	active, isOK := config[plugins.NameActive]
 
-	activePluginName := plugins.NameStorageStandalone
-	if pluginType == plugins.TypeConnector {
-		activePluginName = plugins.NameConnectorStandalone
-	}
+	activePluginName := plugins.NameStandalone
 
 	if isOK {
 		name := active.String()
@@ -157,7 +155,7 @@ func initPlugin(pluginType, activePluginName string, config map[string]*gvar.Var
 	// 初始化插件
 	p := plugins.Get(pluginType, activePluginName)
 	cfg := make(map[string]*gvar.Var)
-	if activePluginName != plugins.NameStorageStandalone {
+	if activePluginName != plugins.NameStandalone {
 		cfg = config[activePluginName].MapStrVar()
 	}
 

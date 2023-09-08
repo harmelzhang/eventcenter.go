@@ -29,7 +29,7 @@ plugins:
       maxIdle: 10  # 允许闲置的最大连接数
 
   connector:  # 连接器
-    active: "redis"  # 不配置 active 则存储在内存中，或者配置 standalone
+    active: "rabbitmq"  # 不配置 active 则存储在内存中，或者配置 standalone
     redis:
       address: "192.168.0.249:16379"
       password: "6HgjpHyTzeREdX46"

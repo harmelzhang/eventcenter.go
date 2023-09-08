@@ -2,15 +2,16 @@ package plugins
 
 const NameActive = "active" // 激活 Key
 
+const NameStandalone = "standalone" // Standalone
+
 // 存储插件
 
 const (
 	TypeStorage = "storage"
 
-	NameStorageStandalone = "standalone" // Standalone
-	NameStorageDB         = "database"   // DataBase
-	NameStorageRedis      = "redis"      // Redis
-	NameStorageMongodb    = "mongodb"    // MongoDB
+	NameStorageDB      = "database" // DataBase
+	NameStorageRedis   = "redis"    // Redis
+	NameStorageMongodb = "mongodb"  // MongoDB
 )
 
 // 连接器插件
@@ -18,12 +19,11 @@ const (
 const (
 	TypeConnector = "connector"
 
-	NameConnectorStandalone = "standalone" // Standalone
-	NameConnectorRedis      = "redis"      // Redis
-	NameConnectorRabbitMQ   = "rabbitmq"   // RabbitMQ
-	NameConnectorRocketMQ   = "rocketmq"   // RocketMQ
-	NameConnectorKafka      = "kafka"      // Kafka
-	NameConnectorPulsar     = "pulsar"     // Pulsar
+	NameConnectorRedis    = "redis"    // Redis
+	NameConnectorRabbitMQ = "rabbitmq" // RabbitMQ
+	NameConnectorRocketMQ = "rocketmq" // RocketMQ
+	NameConnectorKafka    = "kafka"    // Kafka
+	NameConnectorPulsar   = "pulsar"   // Pulsar
 )
 
 // 服务注册
