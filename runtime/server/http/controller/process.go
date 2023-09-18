@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"eventcenter-go/runtime/model"
 	"eventcenter-go/runtime/server/http/api"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/gogf/gf/v2/os/gctx"
@@ -20,13 +21,20 @@ var ProcessController = new(processController)
 // Subscribe 订阅
 func (c processController) Subscribe(ctx context.Context, req *api.SubscribeReq) (resp *api.SubscribeRes, err error) {
 	// 校验地址
-	if req.Protocol != "http" {
-		err = errors.New("事件处理协议暂只支持HTTP")
-		return
-	}
-	if !(strings.HasPrefix(req.Url, "http://") || strings.HasPrefix(req.Url, "https://")) {
-		err = errors.New("事件处理地址协议暂只支持HTTP和HTTPS")
-		return
+	if req.IsMicro == 1 {
+		if !strings.HasPrefix(req.Url, "/") {
+			err = errors.New("事件处理地址格式错误，必须为绝对路径")
+			return
+		}
+	} else {
+		if req.Protocol != "http" {
+			err = errors.New("事件处理协议暂只支持HTTP")
+			return
+		}
+		if !(strings.HasPrefix(req.Url, "http://") || strings.HasPrefix(req.Url, "https://")) {
+			err = errors.New("事件处理地址协议暂只支持HTTP和HTTPS")
+			return
+		}
 	}
 
 	topicService := storagePlugin.TopicService()
@@ -44,7 +52,17 @@ func (c processController) Subscribe(ctx context.Context, req *api.SubscribeReq)
 
 	if endpoint == nil {
 		// 入库
-		_, err = endpointService.Create(ctx, req.ServerName, topic.Name, req.Type, req.Protocol, req.Url)
+		endpoint = &model.Endpoint{
+			Id:           uuid.NewString(),
+			ServerName:   req.ServerName,
+			IsMicro:      req.IsMicro,
+			TopicId:      topic.Id,
+			Type:         req.Type,
+			Protocol:     req.Protocol,
+			Endpoint:     req.Url,
+			RegisterTime: time.Now(),
+		}
+		err = endpointService.Create(ctx, endpoint)
 		if err != nil {
 			return
 		}

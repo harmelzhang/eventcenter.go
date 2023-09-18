@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"errors"
 	"eventcenter-go/runtime/connector"
 	"eventcenter-go/runtime/consts"
 	"eventcenter-go/runtime/plugins"
@@ -30,6 +31,9 @@ import (
 	_ "eventcenter-go/runtime/plugins/connector/rabbitmq"
 	_ "eventcenter-go/runtime/plugins/connector/redis"
 	_ "eventcenter-go/runtime/plugins/connector/standalone"
+	// 注册中心
+	_ "eventcenter-go/runtime/plugins/registry/nacos"
+	_ "eventcenter-go/runtime/plugins/registry/zookeeper"
 )
 
 // Start 启动所有服务
@@ -101,6 +105,9 @@ func LoadPlugins() error {
 func loadPlugins(pluginType string, config map[string]*gvar.Var) error {
 	// 激活插件
 	activePluginName := getActivePluginName(pluginType, config)
+	if pluginType == plugins.TypeRegistry && activePluginName == plugins.NameStandalone {
+		return errors.New("registry plugin config [active] must set effective value")
+	}
 	plugins.ActivePlugin(pluginType, activePluginName)
 
 	// 初始化插件
@@ -141,7 +148,9 @@ func getActivePluginName(pluginType string, config map[string]*gvar.Var) string 
 		name := active.String()
 		if _, has := config[name]; !has {
 			if name != activePluginName {
-				log.Printf("[%s] not found [%s] , use default config [%s]", pluginType, name, activePluginName)
+				if pluginType != plugins.TypeRegistry {
+					log.Printf("[%s] not found [%s] , use default config [%s]", pluginType, name, activePluginName)
+				}
 			}
 		} else {
 			activePluginName = name

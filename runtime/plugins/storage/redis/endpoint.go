@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"eventcenter-go/runtime/model"
 	"github.com/gogf/gf/v2/frame/g"
-	"github.com/google/uuid"
 	"sort"
 	"strings"
-	"time"
 )
 
 type endpointService struct{}
@@ -19,28 +17,14 @@ var epService = new(endpointService)
 var endpointKeyPrefix = "endpoint"
 
 // Create 创建终端
-func (s *endpointService) Create(ctx context.Context, serverName, topicName, typ, protocol, endpoint string) (ep *model.Endpoint, err error) {
+func (s *endpointService) Create(ctx context.Context, endpoint *model.Endpoint) (err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
-		topic, err := tService.QueryOrCreateByName(ctx, topicName)
+		value, err := json.Marshal(endpoint)
 		if err != nil {
 			g.Throw(err)
 		}
 
-		ep = &model.Endpoint{
-			Id:           uuid.NewString(),
-			ServerName:   serverName,
-			TopicId:      topic.Id,
-			Type:         typ,
-			Protocol:     protocol,
-			Endpoint:     endpoint,
-			RegisterTime: time.Now(),
-		}
-		value, err := json.Marshal(ep)
-		if err != nil {
-			g.Throw(err)
-		}
-
-		_, err = DB(ctx).Set(ctx, endpointKeyPrefix+":"+ep.Id, string(value))
+		_, err = DB(ctx).Set(ctx, endpointKeyPrefix+":"+endpoint.Id, string(value))
 		if err != nil {
 			g.Throw(err)
 		}

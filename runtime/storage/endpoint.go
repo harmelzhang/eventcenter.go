@@ -9,7 +9,7 @@ import (
 type EndpointService interface {
 
 	// Create 创建终端
-	Create(ctx context.Context, serverName, topicName, typ, protocol, endpoint string) (ep *model.Endpoint, err error)
+	Create(ctx context.Context, endpoint *model.Endpoint) (err error)
 
 	// DeleteById 根据ID删除
 	DeleteById(ctx context.Context, id string) (err error)

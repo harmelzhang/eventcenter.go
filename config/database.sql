@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS `endpoint`;
 CREATE TABLE `endpoint`  (
     `id` CHAR(36) NOT NULL COMMENT '主键',
     `server_name` VARCHAR(50) NOT NULL COMMENT '服务名称',
+    `is_micro` TINYINT NOT NULL COMMENT '是否微服务',
     `topic_id` CHAR(36) NOT NULL COMMENT '监听主题',
     `type` VARCHAR(50) NOT NULL COMMENT '事件类型',
     `protocol` VARCHAR(10) NOT NULL COMMENT '处理协议（HTTP、TCP、RPC）',

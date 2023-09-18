@@ -8,6 +8,7 @@ var endpointTableName = "endpoint"
 type Endpoint struct {
 	Id           string    `bson:"id" json:"id"`                       // ID
 	ServerName   string    `bson:"server_name" json:"server_name"`     // 服务名
+	IsMicro      int       `bson:"is_micro" json:"is_micro"`           // 是否微服务
 	TopicId      string    `bson:"topic_id" json:"topic_id"`           // 主题ID
 	Type         string    `bson:"type" json:"type"`                   // 事件类型
 	Protocol     string    `bson:"protocol" json:"protocol"`           // 处理协议
@@ -19,6 +20,7 @@ type Endpoint struct {
 type endpointColumns struct {
 	Id           string // ID
 	ServerName   string // 服务名
+	IsMicro      string // 是否微服务
 	TopicId      string // 主题ID
 	Type         string // 事件类型
 	Protocol     string // 协议
@@ -37,6 +39,7 @@ var EndpointInfo = endpointInfo{
 	columns: endpointColumns{
 		Id:           "id",
 		ServerName:   "server_name",
+		IsMicro:      "is_micro",
 		TopicId:      "topic_id",
 		Type:         "type",
 		Protocol:     "protocol",

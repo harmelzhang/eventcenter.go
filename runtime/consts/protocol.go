@@ -1,7 +1,8 @@
 package consts
 
 var (
-	ProtocolHTTP = "http"
-	ProtocolTCP  = "tcp"
-	ProtocolGrpc = "grpc"
+	ProtocolHTTP  = "http"
+	ProtocolHTTPS = "https"
+	ProtocolTCP   = "tcp"
+	ProtocolGrpc  = "grpc"
 )

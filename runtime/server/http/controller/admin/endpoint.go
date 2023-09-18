@@ -3,8 +3,12 @@ package admin
 import (
 	"context"
 	"errors"
+	"eventcenter-go/runtime/model"
 	"eventcenter-go/runtime/server/http/api/admin"
+	"github.com/google/uuid"
 	"log"
+	"strings"
+	"time"
 )
 
 type endpointController struct{}
@@ -66,9 +70,32 @@ func (c endpointController) Delete(ctx context.Context, req *admin.DeleteEndpoin
 
 // Create 创建终端
 func (c endpointController) Create(ctx context.Context, req *admin.CreateEndpointReq) (resp *admin.CreateEndpointRes, err error) {
+	// 校验地址
+	if req.IsMicro == 1 {
+		if !strings.HasPrefix(req.Url, "/") {
+			err = errors.New("事件处理地址格式错误，必须为绝对路径")
+			return
+		}
+	} else {
+		if req.Protocol != "http" {
+			err = errors.New("事件处理协议暂只支持HTTP")
+			return
+		}
+		if !(strings.HasPrefix(req.Url, "http://") || strings.HasPrefix(req.Url, "https://")) {
+			err = errors.New("事件处理地址协议暂只支持HTTP和HTTPS")
+			return
+		}
+	}
+
+	topicService := storagePlugin.TopicService()
 	endpointService := storagePlugin.EndpointService()
 
-	endpoint, err := endpointService.QueryByTopicAndServer(ctx, req.TopicName, req.Type, req.ServerName, req.Protocol)
+	topic, err := topicService.QueryOrCreateByName(ctx, req.TopicName)
+	if err != nil {
+		return
+	}
+
+	endpoint, err := endpointService.QueryByTopicAndServer(ctx, topic.Name, req.Type, req.ServerName, req.Protocol)
 	if err != nil {
 		return
 	}
@@ -78,7 +105,17 @@ func (c endpointController) Create(ctx context.Context, req *admin.CreateEndpoin
 		return
 	}
 
-	_, err = endpointService.Create(ctx, req.ServerName, req.TopicName, req.Type, req.Protocol, req.Url)
+	endpoint = &model.Endpoint{
+		Id:           uuid.NewString(),
+		ServerName:   req.ServerName,
+		IsMicro:      req.IsMicro,
+		TopicId:      topic.Id,
+		Type:         req.Type,
+		Protocol:     req.Protocol,
+		Endpoint:     req.Url,
+		RegisterTime: time.Now(),
+	}
+	err = endpointService.Create(ctx, endpoint)
 	if err != nil {
 		return
 	}

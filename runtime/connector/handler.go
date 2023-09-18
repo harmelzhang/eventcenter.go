@@ -7,7 +7,9 @@ import (
 	"eventcenter-go/runtime/consts"
 	"eventcenter-go/runtime/model"
 	"eventcenter-go/runtime/plugins"
+	"eventcenter-go/runtime/plugins/registry"
 	"eventcenter-go/runtime/plugins/storage"
+	"fmt"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"log"
 	"net/http"
@@ -36,7 +38,7 @@ func NewEventHandler() *EventHandler {
 
 			for _, endpoint := range endpoints {
 				switch endpoint.Protocol {
-				case consts.ProtocolHTTP:
+				case consts.ProtocolHTTP, consts.ProtocolHTTPS:
 					go httpHandler(endpoint, event)
 				case consts.ProtocolTCP:
 					go tcpHandler(endpoint, event)
@@ -59,7 +61,30 @@ func httpHandler(endpoint *model.Endpoint, event *cloudevents.Event) {
 		return
 	}
 
-	_, err = http.Post(endpoint.Endpoint, event.DataContentType(), bytes.NewReader(data))
+	url := endpoint.Endpoint
+	if endpoint.IsMicro == 1 {
+		registryPlugin := plugins.GetActivedPluginByType(plugins.TypeRegistry)
+		if registryPlugin == nil {
+			log.Printf("not found actived registry plugin")
+			return
+		}
+		registryService := registryPlugin.(registry.Plugin).Service()
+		ins, err := registryService.FindService(endpoint.ServerName)
+		if err != nil {
+			log.Printf("registry find service err: %v", err)
+			return
+		}
+		if ins == nil {
+			log.Println("registry not found service")
+			return
+		}
+		if ins.Port == 80 {
+			url = fmt.Sprintf("%s://%s%s", endpoint.Protocol, ins.Address, endpoint.Endpoint)
+		} else {
+			url = fmt.Sprintf("%s://%s:%d%s", endpoint.Protocol, ins.Address, ins.Port, endpoint.Endpoint)
+		}
+	}
+	_, err = http.Post(url, event.DataContentType(), bytes.NewReader(data))
 	if err != nil {
 		log.Printf("http handler err: %v", err)
 		return

@@ -4,10 +4,8 @@ import (
 	"context"
 	"eventcenter-go/runtime/model"
 	"github.com/gogf/gf/v2/frame/g"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 )
 
 type endpointService struct{}
@@ -15,23 +13,9 @@ type endpointService struct{}
 var epService = new(endpointService)
 
 // Create 创建终端
-func (s *endpointService) Create(ctx context.Context, serverName, topicName, typ, protocol, endpoint string) (ep *model.Endpoint, err error) {
+func (s *endpointService) Create(ctx context.Context, endpoint *model.Endpoint) (err error) {
 	err = g.Try(ctx, func(ctx context.Context) {
-		topic, err := tService.QueryOrCreateByName(ctx, topicName)
-		if err != nil {
-			g.Throw(err)
-		}
-
-		ep = &model.Endpoint{
-			Id:           uuid.NewString(),
-			ServerName:   serverName,
-			TopicId:      topic.Id,
-			Type:         typ,
-			Protocol:     protocol,
-			Endpoint:     endpoint,
-			RegisterTime: time.Now(),
-		}
-		_, err = DB(ctx, model.EndpointInfo.Table()).InsertOne(ctx, ep)
+		_, err = DB(ctx, model.EndpointInfo.Table()).InsertOne(ctx, endpoint)
 		if err != nil {
 			g.Throw(err)
 		}
@@ -57,6 +41,7 @@ func (s *endpointService) Update(ctx context.Context, endpoint *model.Endpoint) 
 		doc := bson.M{
 			"$set": bson.M{
 				"server_name": endpoint.ServerName,
+				"is_micro":    endpoint.IsMicro,
 				"topic_id":    endpoint.TopicId,
 				"type":        endpoint.Type,
 				"protocol":    endpoint.Protocol,

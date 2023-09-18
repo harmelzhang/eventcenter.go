@@ -1,12 +1,13 @@
 server:
-  address: ":3894"
+  name: "eventcenter"
+  address: "127.0.0.1:3894"
   serverAgent: "EventCenter 1.0 Server"
 
-tcp:
-  port: ":13894"
+tcp:  # TODO 暂未实现
+  port: "127.0.0.1:13894"
 
-grpc:
-  port: ":23894"
+grpc:  # TODO 暂未实现
+  port: "127.0.0.1:23894"
 
 plugins:
   storage:  # 存储元数据
@@ -39,3 +40,14 @@ plugins:
     rabbitmq:
       uri: "amqp://root:root@192.168.2.249:5672/eventcenter"
       exchange: "bus"
+
+  registry:  # 注册中心
+    active: "zookeeper"
+    nacos:
+      address: "127.0.0.1:8848"
+      service:
+        weight: 5  # 默认为 10
+    zookeeper:
+      address: "192.168.56.100:2181,192.168.56.100:2182,192.168.56.100:2183"
+      path: "/services"
+      timeout: 5  # 单位：秒，默认为 10
