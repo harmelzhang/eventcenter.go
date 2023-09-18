@@ -11,6 +11,7 @@ import (
 	"eventcenter-go/runtime/plugins/storage"
 	"fmt"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"io"
 	"log"
 	"net/http"
 )
@@ -84,11 +85,18 @@ func httpHandler(endpoint *model.Endpoint, event *cloudevents.Event) {
 			url = fmt.Sprintf("%s://%s:%d%s", endpoint.Protocol, ins.Address, ins.Port, endpoint.Endpoint)
 		}
 	}
-	_, err = http.Post(url, event.DataContentType(), bytes.NewReader(data))
+	httpResp, err := http.Post(url, event.DataContentType(), bytes.NewReader(data))
 	if err != nil {
 		log.Printf("http handler err: %v", err)
 		return
 	}
+
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		log.Printf("read http response body err: %v", err)
+		return
+	}
+	log.Printf("http response: %d -> %s", httpResp.StatusCode, string(body))
 }
 
 func tcpHandler(endpoint *model.Endpoint, event *cloudevents.Event) {
