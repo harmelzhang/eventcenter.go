@@ -42,7 +42,7 @@ plugins:
       exchange: "bus"
 
   registry:  # 注册中心
-    active: "zookeeper"
+    #active: "zookeeper"
     nacos:
       address: "127.0.0.1:8848"
       service:

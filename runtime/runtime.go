@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"errors"
 	"eventcenter-go/runtime/connector"
 	"eventcenter-go/runtime/consts"
 	"eventcenter-go/runtime/plugins"
@@ -106,7 +105,8 @@ func loadPlugins(pluginType string, config map[string]*gvar.Var) error {
 	// 激活插件
 	activePluginName := getActivePluginName(pluginType, config)
 	if pluginType == plugins.TypeRegistry && activePluginName == plugins.NameStandalone {
-		return errors.New("registry plugin config [active] must set effective value")
+		log.Println("registry plugin config [active] not set, registry server is not start")
+		return nil
 	}
 	plugins.ActivePlugin(pluginType, activePluginName)
 
