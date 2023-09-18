@@ -1,13 +1,13 @@
 server:
   name: "eventcenter"
-  address: "127.0.0.1:3894"
+  address: "192.168.2.119:3894"  # 需要注册到服务注册中心，需要填写实际地址
   serverAgent: "EventCenter 1.0 Server"
 
 tcp:  # TODO 暂未实现
-  port: "127.0.0.1:13894"
+  port: "192.168.2.119:13894"
 
 grpc:  # TODO 暂未实现
-  port: "127.0.0.1:23894"
+  port: "192.168.2.119:23894"
 
 plugins:
   storage:  # 存储元数据

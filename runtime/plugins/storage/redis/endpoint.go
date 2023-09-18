@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"eventcenter-go/runtime/model"
+	"fmt"
 	"github.com/gogf/gf/v2/frame/g"
 	"sort"
 	"strings"
@@ -269,9 +270,12 @@ func (s *endpointService) QueryByTopicAndType(ctx context.Context, topicName, ty
 			return
 		}
 
-		topic, err := tService.QueryOrCreateByName(ctx, topicName)
+		topic, err := tService.QueryByName(ctx, topicName)
 		if err != nil {
 			g.Throw(err)
+		}
+		if topic == nil {
+			g.Throw(fmt.Sprintf("not found topic [%s]", topicName))
 		}
 
 		for _, ep := range eps {

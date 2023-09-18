@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"eventcenter-go/runtime/model"
+	"fmt"
 	"github.com/gogf/gf/v2/frame/g"
 )
 
@@ -125,9 +126,12 @@ func (s *endpointService) QueryByTopicAndServer(ctx context.Context, topicName, 
 func (s *endpointService) QueryByTopicAndType(ctx context.Context, topicName, typ string) (endpoints []*model.Endpoint, err error) {
 	endpoints = make([]*model.Endpoint, 0)
 	err = g.Try(ctx, func(ctx context.Context) {
-		topic, err := tService.QueryOrCreateByName(ctx, topicName)
+		topic, err := tService.QueryByName(ctx, topicName)
 		if err != nil {
 			g.Throw(err)
+		}
+		if topic == nil {
+			g.Throw(fmt.Sprintf("not found topic [%s]", topicName))
 		}
 
 		dao := DB(ctx, model.EndpointInfo.Table())
