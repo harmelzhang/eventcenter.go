@@ -143,7 +143,7 @@ func (c processController) Trigger(ctx context.Context, req *api.TriggerReq) (re
 	data := make(map[string]interface{})
 	err = json.Unmarshal([]byte(req.Data), &data)
 	if err != nil {
-		err = event.SetData(cloudevents.ApplicationJSON, req.Data)
+		err = event.SetData(cloudevents.TextPlain, req.Data)
 		if err != nil {
 			return
 		}
