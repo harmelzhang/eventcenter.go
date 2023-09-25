@@ -91,6 +91,7 @@ func (c processController) Subscribe(ctx context.Context, req *api.SubscribeReq)
 
 // Unsubscribe 取消订阅
 func (c processController) Unsubscribe(ctx context.Context, req *api.UnsubscribeReq) (resp *api.UnsubscribeRes, err error) {
+	topicService := storagePlugin.TopicService()
 	endpointService := storagePlugin.EndpointService()
 
 	endpoint, err := endpointService.QueryByTopicAndServer(ctx, req.TopicName, req.Type, req.ServerName, req.Protocol)
@@ -121,6 +122,18 @@ func (c processController) Unsubscribe(ctx context.Context, req *api.Unsubscribe
 			if err != nil {
 				log.Printf("consumer unsubscribe topic [%s] err: %v", req.TopicName, err)
 				return
+			}
+			topic, err := topicService.QueryByName(ctx, req.TopicName)
+			if err != nil {
+				log.Printf("query topic [%s] err: %v", req.TopicName, err)
+				return
+			}
+			if topic != nil {
+				err = topicService.DeleteById(ctx, topic.Id)
+				if err != nil {
+					log.Printf("delete topic [%s] err: %v", topic.Name, err)
+					return
+				}
 			}
 		}
 	}()
