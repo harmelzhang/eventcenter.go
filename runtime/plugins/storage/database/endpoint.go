@@ -81,7 +81,7 @@ func (s *endpointService) Query(ctx context.Context, serverName, topicName, typ,
 			dao = dao.Offset(offset).Limit(limit)
 		}
 
-		err = dao.OrderDesc(model.TopicInfo.Columns().CreateTime).Scan(&endpoints)
+		err = dao.OrderDesc(model.EndpointInfo.Columns().RegisterTime).Scan(&endpoints)
 		if err != nil {
 			g.Throw(err)
 		}
