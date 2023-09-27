@@ -73,7 +73,7 @@ func (p *producer) Stop() error {
 }
 
 // Publish 发布事件
-func (p *producer) Publish(ctx context.Context, event *cloudevents.Event) (err error) {
+func (p *producer) Publish(ctx context.Context, cloudevent *cloudevents.Event) (err error) {
 	if p.IsStoped() {
 		err = errors.New("producer is stop publish event error")
 		return
@@ -91,12 +91,12 @@ func (p *producer) Publish(ctx context.Context, event *cloudevents.Event) (err e
 	}
 	defer func() { _ = ch.Close() }()
 
-	data, err := json.Marshal(event)
+	data, err := json.Marshal(cloudevent)
 	if err != nil {
 		return
 	}
 
-	err = ch.Publish(p.config["exchange"].String(), event.Subject(), false, false, amqp.Publishing{
+	err = ch.Publish(p.config["exchange"].String(), cloudevent.Subject(), false, false, amqp.Publishing{
 		Body: data,
 	})
 

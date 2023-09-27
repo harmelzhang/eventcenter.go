@@ -1,6 +1,6 @@
 server:
   name: "eventcenter"
-  address: "192.168.2.119:3894"  # 需要注册到服务注册中心，需要填写实际地址
+  address: "192.168.2.119:3895"  # 需要注册到服务注册中心，需要填写实际地址
   serverAgent: "EventCenter 1.0 Server"
 
 tcp:  # TODO 暂未实现
@@ -30,13 +30,14 @@ plugins:
       maxIdle: 10  # 允许闲置的最大连接数
 
   connector:  # 连接器
-    active: "rabbitmq"  # 不配置 active 则存储在内存中，或者配置 standalone
+    active: "redis"  # 不配置 active 则存储在内存中，或者配置 standalone
     redis:
       address: "192.168.0.249:16379"
       password: "6HgjpHyTzeREdX46"
       db: 2
       minIdle: 5  # 允许闲置的最小连接数
       maxIdle: 10  # 允许闲置的最大连接数
+      queue_prefix: connector  # 队列名前缀
     rabbitmq:
       uri: "amqp://root:root@192.168.2.249:5672/eventcenter"
       exchange: "bus"

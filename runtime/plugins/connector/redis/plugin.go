@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var defaultQueuePrefix = "connector"
+
 type plugin struct {
 	consumer connector.Consumer
 	producer connector.Producer
@@ -44,13 +46,18 @@ func (p *plugin) Init(config map[string]*gvar.Var) (err error) {
 		SlaveOnly:       config["slaveOnly"].Bool(),
 	}, plugins.TypeConnector)
 
-	p.consumer = NewConsumer()
+	queuePrefix := config["queue_prefix"].String()
+	if queuePrefix == "" {
+		queuePrefix = defaultQueuePrefix
+	}
+
+	p.consumer = NewConsumer(queuePrefix)
 	err = p.consumer.Start()
 	if err != nil {
 		return
 	}
 
-	p.producer = NewProducer()
+	p.producer = NewProducer(queuePrefix)
 	err = p.producer.Start()
 	if err != nil {
 		return

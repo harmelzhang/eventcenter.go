@@ -2,20 +2,23 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"eventcenter-go/runtime/connector"
 	"eventcenter-go/runtime/plugins"
+	"fmt"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/gogf/gf/v2/frame/g"
 	"go.uber.org/atomic"
 )
 
 type producer struct {
-	started atomic.Bool
+	started     atomic.Bool
+	queuePrefix string
 }
 
-func NewProducer() connector.Producer {
-	return &producer{}
+func NewProducer(queuePrefix string) connector.Producer {
+	return &producer{queuePrefix: queuePrefix}
 }
 
 // Init 初始化
@@ -46,13 +49,19 @@ func (p *producer) Stop() error {
 }
 
 // Publish 发布事件
-func (p *producer) Publish(ctx context.Context, event *cloudevents.Event) (err error) {
+func (p *producer) Publish(ctx context.Context, cloudevent *cloudevents.Event) (err error) {
 	if p.IsStoped() {
 		err = errors.New("producer is stop publish event error")
 		return
 	}
 
-	_, err = g.Redis(plugins.TypeConnector).Publish(ctx, event.Subject(), event)
+	bytes, err := json.Marshal(cloudevent)
+	if err != nil {
+		return
+	}
+
+	key := fmt.Sprintf("%s:%s", p.queuePrefix, cloudevent.Subject())
+	_, err = g.Redis(plugins.TypeConnector).LPush(ctx, key, string(bytes))
 	if err != nil {
 		return
 	}

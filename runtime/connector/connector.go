@@ -28,7 +28,7 @@ type Producer interface {
 	LifeCycle
 
 	// Publish 发布事件
-	Publish(ctx context.Context, event *cloudevents.Event) (err error)
+	Publish(ctx context.Context, cloudevent *cloudevents.Event) (err error)
 }
 
 // Consumer 消费者

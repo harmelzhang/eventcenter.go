@@ -6,24 +6,29 @@ import (
 	"errors"
 	"eventcenter-go/runtime/connector"
 	"eventcenter-go/runtime/plugins"
+	"fmt"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/gogf/gf/v2/database/gredis"
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/google/uuid"
 	"go.uber.org/atomic"
 	"log"
 	"sync"
+	"time"
 )
 
 type consumer struct {
-	subscribes map[string]*subscribeWorker
-	handler    *connector.EventHandler
-	started    atomic.Bool
-	mutex      sync.Mutex
+	queuePrefix string
+	subscribes  map[string]*subscribeWorker
+	handler     *connector.EventHandler
+	started     atomic.Bool
+	mutex       sync.Mutex
 }
 
-func NewConsumer() connector.Consumer {
+func NewConsumer(queuePrefix string) connector.Consumer {
 	return &consumer{
-		subscribes: make(map[string]*subscribeWorker),
+		queuePrefix: queuePrefix,
+		subscribes:  make(map[string]*subscribeWorker),
 	}
 }
 
@@ -80,10 +85,11 @@ func (c *consumer) Subscribe(topicName string) (err error) {
 		}
 
 		worker := &subscribeWorker{
-			conn:      conn,
-			topicName: topicName,
-			handler:   c.handler,
-			quit:      make(chan bool, 1),
+			conn:        conn,
+			queuePrefix: c.queuePrefix,
+			topicName:   topicName,
+			handler:     c.handler,
+			quit:        make(chan bool, 1),
 		}
 		c.subscribes[topicName] = worker
 
@@ -118,13 +124,18 @@ func (c *consumer) RegisterHandler(handler *connector.EventHandler) {
 
 // Worker
 
-const StopSignalMessage = ""
+var StopSignalMessage string
+
+func init() {
+	StopSignalMessage = uuid.NewString()
+}
 
 type subscribeWorker struct {
-	conn      gredis.Conn
-	topicName string
-	handler   *connector.EventHandler
-	quit      chan bool
+	conn        gredis.Conn
+	queuePrefix string
+	topicName   string
+	handler     *connector.EventHandler
+	quit        chan bool
 }
 
 func (worker *subscribeWorker) run() {
@@ -137,19 +148,29 @@ func (worker *subscribeWorker) run() {
 			}
 			return
 		default:
-			msg, err := worker.conn.ReceiveMessage(context.TODO())
+			ctx := context.TODO()
+			key := fmt.Sprintf("%s:%s", worker.queuePrefix, worker.topicName)
+			value, err := g.Redis(plugins.TypeConnector).RPop(ctx, key)
 			if err != nil {
 				log.Printf("fail to receive message from redis: %v", err)
 				continue
 			}
 
-			if msg.Payload == StopSignalMessage {
+			msg := value.String()
+
+			if msg == "" {
+				log.Println("no receive data, sleep 1s")
+				time.Sleep(1 * time.Second)
+				continue
+			}
+
+			if msg == StopSignalMessage {
 				log.Println("handler receive stop signal")
 				continue
 			}
 
 			event := cloudevents.NewEvent()
-			err = json.Unmarshal([]byte(msg.Payload), &event)
+			err = json.Unmarshal([]byte(msg), &event)
 			if err != nil {
 				log.Printf("fail to unmarshal message err: %v", err)
 				continue
